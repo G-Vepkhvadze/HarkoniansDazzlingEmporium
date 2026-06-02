@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  VERY_RARE
+  LEGENDARY
+}
+
+model Item {
+  id          String      @id @default(uuid())
+  image       String
+  name        String
+  description String
+  rarity      ItemRarity
+  stock       Int
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
