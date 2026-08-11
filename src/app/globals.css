@@ -540,55 +540,76 @@ h3 {
 
 .admin-table th,
 .admin-table td {
-  padding: 0.3rem 0.3rem;
+  padding: 0.35rem 0.45rem;
   vertical-align: middle;
   text-align: left;
   border-bottom: 1px solid rgba(255,255,255,0.04);
+  box-sizing: border-box;
 }
 
+/* Column tuning: use colgroup for proportions; guard against overflow */
+.admin-table th.image,
 .admin-table td.image {
-  width: 6rem;
-}
-
-.admin-table td.description {
-  width: 50%;
-}
-
-.admin-table td.name {
-  width: 16rem;
-}
-
-.admin-table td.rarity {
-  width: 8rem;
-}
-
-.admin-table td.type {
-  width: 8rem;
-}
-
-.admin-table td.deal {
-  width: 3.5rem;
   text-align: center;
+  width: 56px;
 }
 
+.admin-table th.name,
+.admin-table td.name {
+  min-width: 120px;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-table th.description,
+.admin-table td.description {
+  /* will take remaining space from colgroup */
+}
+
+.admin-table th.rarity,
+.admin-table td.rarity,
+.admin-table th.type,
+.admin-table td.type {
+  white-space: nowrap;
+}
+
+.admin-table th.deal,
+.admin-table td.deal {
+  text-align: center;
+  width: 40px;
+}
+
+.admin-table th.discount,
+.admin-table td.discount,
+.admin-table th.stock,
 .admin-table td.stock {
-  width: 5rem;
+  width: 64px;
 }
 
-.admin-table td.discount {
-  width: 5rem;
-}
-
+/* Make text inputs fill available cell space; numeric inputs kept small */
 .admin-table input[type="text"],
-.admin-table input[type="number"],
 .admin-table select {
   padding: 0.25rem 0.4rem;
   margin: 0;
   font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-table input[type="number"] {
+  padding: 0.25rem 0.35rem;
+  width: 4.2rem;
+}
+
+.admin-table td.deal input[type="checkbox"] {
+  margin: 0 auto;
+  display: block;
 }
 
 .admin-table input[type="file"] {
-  margin-top: 0.35rem;
+  display: none; /* handled by uploader */
 }
 
 /* Reduce row height by shrinking images */

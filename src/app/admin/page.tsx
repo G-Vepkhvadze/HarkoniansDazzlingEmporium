@@ -95,6 +95,17 @@ export default function AdminPage() {
       <h1>Admin — Item Manager</h1>
       <div style={{overflow: 'auto'}}>
         <table className="admin-table">
+          <colgroup>
+            <col style={{width: '56px'}} />
+            <col style={{width: '16%'}} />
+            <col style={{width: '50%'}} />
+            <col style={{width: '8%'}} />
+            <col style={{width: '6%'}} />
+            <col style={{width: '4%'}} />
+            <col style={{width: '4%'}} />
+            <col style={{width: '4%'}} />
+            <col style={{width: '6%'}} />
+          </colgroup>
           <thead>
             <tr>
               <th className="image">Image</th>
