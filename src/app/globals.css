@@ -550,12 +550,33 @@ h3 {
   width: 6rem;
 }
 
-.admin-table td.name {
-  width: 14rem;
+.admin-table td.description {
+  width: 50%;
 }
 
-.admin-table td.description {
-  width: 40%;
+.admin-table td.name {
+  width: 16rem;
+}
+
+.admin-table td.rarity {
+  width: 8rem;
+}
+
+.admin-table td.type {
+  width: 8rem;
+}
+
+.admin-table td.deal {
+  width: 3.5rem;
+  text-align: center;
+}
+
+.admin-table td.stock {
+  width: 5rem;
+}
+
+.admin-table td.discount {
+  width: 5rem;
 }
 
 .admin-table input[type="text"],
@@ -580,7 +601,7 @@ h3 {
 
 /* Add more breathing room between inline controls (tags) */
 .admin-table td > * {
-  margin-right: 0.6rem;
+  margin-right: 0.2rem;
 }
 
 /* Actions buttons small */

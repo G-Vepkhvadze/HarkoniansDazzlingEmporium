@@ -97,15 +97,15 @@ export default function AdminPage() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Image</th>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Rarity</th>
-              <th>Type</th>
-              <th>Deal</th>
-              <th>Discount %</th>
-              <th>Stock</th>
-              <th>Actions</th>
+              <th className="image">Image</th>
+              <th className="name">Name</th>
+              <th className="description">Description</th>
+              <th className="rarity">Rarity</th>
+              <th className="type">Type</th>
+              <th className="deal">Deal</th>
+              <th className="discount">Discount %</th>
+              <th className="stock">Stock</th>
+              <th className="actions">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -123,7 +123,7 @@ export default function AdminPage() {
                 </td>
                 <td className="name"><input value={item.name} onChange={(e) => updateField(item.id, 'name', e.target.value)} /></td>
                 <td className="description"><input value={item.description} onChange={(e) => updateField(item.id, 'description', e.target.value)} /></td>
-                <td>
+                <td className="rarity">
                   <select value={item.rarity} onChange={(e) => updateField(item.id, 'rarity', e.target.value)}>
                     <option value="COMMON">COMMON</option>
                     <option value="UNCOMMON">UNCOMMON</option>
@@ -132,7 +132,7 @@ export default function AdminPage() {
                     <option value="LEGENDARY">LEGENDARY</option>
                   </select>
                 </td>
-                <td>
+                <td className="type">
                   <select value={item.type} onChange={(e) => updateField(item.id, 'type', e.target.value)}>
                     <option value="WEAPON">WEAPON</option>
                     <option value="ARMOR">ARMOR</option>
@@ -141,9 +141,9 @@ export default function AdminPage() {
                     <option value="POTION">POTION</option>
                   </select>
                 </td>
-                <td><input type="checkbox" checked={item.deal} onChange={(e) => updateField(item.id, 'deal', e.target.checked)} /></td>
-                <td><input type="number" value={item.discountPercent ?? 0} onChange={(e) => updateField(item.id, 'discountPercent', Number(e.target.value))} /></td>
-                <td><input type="number" value={item.stock} onChange={(e) => updateField(item.id, 'stock', Number(e.target.value))} /></td>
+                <td className="deal"><input type="checkbox" checked={item.deal} onChange={(e) => updateField(item.id, 'deal', e.target.checked)} /></td>
+                <td className="discount"><input type="number" value={item.discountPercent ?? 0} onChange={(e) => updateField(item.id, 'discountPercent', Number(e.target.value))} /></td>
+                <td className="stock"><input type="number" value={item.stock} onChange={(e) => updateField(item.id, 'stock', Number(e.target.value))} /></td>
                 <td className="admin-actions">
                   <button onClick={() => saveItem(item)}>Save</button>
                   <button onClick={() => deleteItem(item.id)}>Delete</button>
