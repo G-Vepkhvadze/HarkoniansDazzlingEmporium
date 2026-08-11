@@ -509,3 +509,71 @@ h3 {
     position: static;
   }
 }
+
+/* Admin page full width and tighter table rows */
+.admin-page {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 2rem;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.95rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.35rem 0.5rem;
+  vertical-align: middle;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.admin-table td.image {
+  width: 6rem;
+}
+
+.admin-table td.name {
+  width: 14rem;
+}
+
+.admin-table td.description {
+  width: 40%;
+}
+
+.admin-table input[type="text"],
+.admin-table input[type="number"],
+.admin-table select {
+  padding: 0.25rem 0.4rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.admin-table input[type="file"] {
+  margin-top: 0.35rem;
+}
+
+/* Reduce row height by shrinking images */
+.admin-table img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Add more breathing room between inline controls (tags) */
+.admin-table td > * {
+  margin-right: 0.6rem;
+}
+
+/* Actions buttons small */
+.admin-actions button {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+

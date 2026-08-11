@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-ninterface ItemRow {
+
+interface ItemRow {
   id: string;
   image: string;
   name: string;
@@ -12,52 +13,61 @@ import { useRouter } from "next/navigation";
   discountPercent: number;
   stock: number;
 }
-nexport default function AdminPage() {
+
+export default function AdminPage() {
   const router = useRouter();
   const [items, setItems] = useState<ItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [newItem, setNewItem] = useState<any>({ image: "", name: "", description: "", rarity: "COMMON", type: "POTION", deal: false, discountPercent: 0, stock: 1 });
-n  useEffect(() => {
+
+  useEffect(() => {
     const isAdmin = typeof window !== 'undefined' && localStorage.getItem("isAdmin") === "true";
     if (!isAdmin) router.push('/auth');
     else loadItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-n  async function loadItems() {
+
+  async function loadItems() {
     setLoading(true);
     const res = await fetch('/api/items');
     const data = await res.json();
     setItems(data || []);
     setLoading(false);
   }
-n  async function saveItem(item: ItemRow) {
+
+  async function saveItem(item: ItemRow) {
     await fetch('/api/items', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) });
     await loadItems();
   }
-n  async function deleteItem(id: string) {
+
+  async function deleteItem(id: string) {
     if (!confirm('Are you sure you want to delete this item?')) return;
     await fetch(`/api/items?id=${id}`, { method: 'DELETE' });
     await loadItems();
   }
-n  async function uploadImage(file: File) {
+
+  async function uploadImage(file: File) {
     const fd = new FormData();
     fd.append('file', file);
     const res = await fetch('/api/upload', { method: 'POST', body: fd });
     const data = await res.json();
     return data.path; // e.g., /ItemImages/filename.png
   }
-n  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>, item: ItemRow) {
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>, item: ItemRow) {
     const f = e.target.files?.[0];
     if (!f) return;
     const path = await uploadImage(f);
     item.image = path;
     setItems((s) => s.map((it) => (it.id === item.id ? { ...it, image: path } : it)));
   }
-n  function updateField(id: string, key: string, value: any) {
+
+  function updateField(id: string, key: string, value: any) {
     setItems((s) => s.map((it) => (it.id === id ? { ...it, [key]: value } : it)));
   }
-n  async function addNewItem(e: React.FormEvent) {
+
+  async function addNewItem(e: React.FormEvent) {
     e.preventDefault();
     // validate required fields except image
     const required = ["name", "description", "rarity", "type", "stock"];
@@ -77,12 +87,14 @@ import { useRouter } from "next/navigation";
       alert('Failed to add item');
     }
   }
-n  if (loading) return <div style={{padding: '2rem'}}>Loading…</div>;
-n  return (
-    <div style={{padding: '2rem'}}>
+
+  if (loading) return <div style={{padding: '2rem'}}>Loading…</div>;
+
+  return (
+    <div className="admin-page">
       <h1>Admin — Item Manager</h1>
       <div style={{overflow: 'auto'}}>
-        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+        <table className="admin-table">
           <thead>
             <tr>
               <th>Image</th>
@@ -98,15 +110,15 @@ import { useRouter } from "next/navigation";
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} style={{borderTop: '1px solid rgba(255,255,255,0.06)'}}>
-                <td style={{padding: '0.5rem'}}>
-                  {item.image ? <img src={item.image} alt="" style={{width: 60, height: 60, objectFit: 'cover'}} /> : null}
+              <tr key={item.id}>
+                <td className="image">
+                  {item.image ? <img src={item.image} alt="" /> : null}
                   <div>
                     <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, item)} />
                   </div>
                 </td>
-                <td><input value={item.name} onChange={(e) => updateField(item.id, 'name', e.target.value)} /></td>
-                <td><input value={item.description} onChange={(e) => updateField(item.id, 'description', e.target.value)} /></td>
+                <td className="name"><input value={item.name} onChange={(e) => updateField(item.id, 'name', e.target.value)} /></td>
+                <td className="description"><input value={item.description} onChange={(e) => updateField(item.id, 'description', e.target.value)} /></td>
                 <td>
                   <select value={item.rarity} onChange={(e) => updateField(item.id, 'rarity', e.target.value)}>
                     <option value="COMMON">COMMON</option>
@@ -128,19 +140,21 @@ import { useRouter } from "next/navigation";
                 <td><input type="checkbox" checked={item.deal} onChange={(e) => updateField(item.id, 'deal', e.target.checked)} /></td>
                 <td><input type="number" value={item.discountPercent ?? 0} onChange={(e) => updateField(item.id, 'discountPercent', Number(e.target.value))} /></td>
                 <td><input type="number" value={item.stock} onChange={(e) => updateField(item.id, 'stock', Number(e.target.value))} /></td>
-                <td>
+                <td className="admin-actions">
                   <button onClick={() => saveItem(item)}>Save</button>
-                  <button onClick={() => deleteItem(item.id)} style={{marginLeft: '0.5rem'}}>Delete</button>
+                  <button onClick={() => deleteItem(item.id)}>Delete</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-n      <div style={{marginTop: '1rem'}}>
+
+      <div style={{marginTop: '1rem'}}>
         <button onClick={() => setShowAdd((s) => !s)}>{showAdd ? 'Cancel' : 'Add New Item'}</button>
       </div>
-n      {showAdd ? (
+
+      {showAdd ? (
         <form onSubmit={addNewItem} style={{marginTop: '1rem', display: 'grid', gap: '0.5rem'}}> 
           <label>
             Name
