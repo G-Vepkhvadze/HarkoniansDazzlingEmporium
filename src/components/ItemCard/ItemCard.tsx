@@ -47,7 +47,11 @@ export default function ItemCard({ item }: { item: ShopItem }) {
                 {item.deal && item.discountPercent > 0 ? (
                     <span className="deal-tag">{item.discountPercent}% off</span>
                 ) : null}
-                {item.name.slice(0, 1)}
+                {item.image ? (
+                    <img src={item.image} alt={item.name} className="item-card__image-img" />
+                ) : (
+                    <div className="item-card__initial">{item.name.slice(0, 1)}</div>
+                )}
             </div>
             <div className="item-card__body">
                 <div className="item-card__title-row">
