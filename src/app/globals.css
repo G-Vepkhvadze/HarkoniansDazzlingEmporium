@@ -590,12 +590,18 @@ h3 {
 
 /* Make text inputs fill available cell space; numeric inputs kept small */
 .admin-table input[type="text"],
-.admin-table select {
+.admin-table select,
+.admin-table textarea {
   padding: 0.25rem 0.4rem;
   margin: 0;
   font-size: 0.9rem;
   width: 100%;
   box-sizing: border-box;
+}
+
+.admin-table textarea {
+  min-height: 3.2rem;
+  resize: vertical;
 }
 
 .admin-table input[type="number"] {

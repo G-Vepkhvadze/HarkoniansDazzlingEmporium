@@ -96,7 +96,7 @@ export default function AdminPage() {
       <div style={{overflow: 'auto'}}>
         <table className="admin-table">
           <colgroup>
-            <col style={{width: '56px'}} />
+            <col style={{width: '60px'}} />
             <col style={{width: '16%'}} />
             <col style={{width: '50%'}} />
             <col style={{width: '8%'}} />
@@ -133,7 +133,7 @@ export default function AdminPage() {
                   </label>
                 </td>
                 <td className="name"><input value={item.name} onChange={(e) => updateField(item.id, 'name', e.target.value)} /></td>
-                <td className="description"><input value={item.description} onChange={(e) => updateField(item.id, 'description', e.target.value)} /></td>
+                <td className="description"><textarea value={item.description} onChange={(e) => updateField(item.id, 'description', e.target.value)} /></td>
                 <td className="rarity">
                   <select value={item.rarity} onChange={(e) => updateField(item.id, 'rarity', e.target.value)}>
                     <option value="COMMON">COMMON</option>
@@ -177,7 +177,7 @@ export default function AdminPage() {
           </label>
           <label>
             Description
-            <input required value={newItem.description} onChange={(e) => setNewItem((s:any)=>({...s, description: e.target.value}))} />
+            <textarea required value={newItem.description} onChange={(e) => setNewItem((s:any)=>({...s, description: e.target.value}))} />
           </label>
           <label>
             Rarity
