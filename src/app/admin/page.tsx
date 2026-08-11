@@ -7,27 +7,11 @@ export default function Admin404() {
 
   return (
     <main style={{padding: '4rem', textAlign: 'center'}}>
-      <h1 style={{fontSize: '3rem', margin: 0}}>404 — Portal Not Found</h1>
+      <h1 style={{fontSize: '3rem', margin: 0}}>404 - Portal Not Found</h1>
       <p style={{marginTop: '0.5rem', color: 'var(--muted)'}}>The admin corridor appears to be sealed. Nothing to see here.</p>
 
-      <div style={{marginTop: '2rem'}}>
-        <button
-          onClick={() => router.push('/thesupersecretpagenobodyhasaccessto')}
-          style={{
-            background: 'var(--gold-soft)',
-            color: 'var(--background)',
-            border: 'none',
-            padding: '0.6rem 1rem',
-            borderRadius: 4,
-            cursor: 'pointer'
-          }}
-        >
-          Step through the hidden portal
-        </button>
-      </div>
-
       <p style={{marginTop: '2rem', color: 'var(--muted)'}}>
-        Or enjoy this harmless little 404 page — the Emporium prefers its secret corridors unadvertised.
+        Or enjoy this harmless little 404 page. the Emporium prefers its secret corridors unadvertised.
       </p>
     </main>
   );

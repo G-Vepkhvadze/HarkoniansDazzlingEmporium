@@ -153,7 +153,6 @@ h3 {
   line-height: 1.2;
 }
 
-/* Use fantasy font for item card titles and descriptions */
 .item-card h3 {
   font-family: var(--fantasy-font);
 }
@@ -161,6 +160,7 @@ h3 {
 .item-card__description {
   font-family: var(--fantasy-font);
   color: var(--muted);
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -382,7 +382,6 @@ h3 {
 
 .promo-card,
 .branch-card {
-  min-height: 11rem;
 }
 
 .featured-carousel {
@@ -424,22 +423,13 @@ h3 {
   gap: 3rem;
 }
 
-.branch-card h2,
-.branch-card p {
-  margin-bottom: 0;
+.branch-card h2 {
+  font-size: 28px;
+  text-align: center;
 }
 
 .branch-card h2 {
   align-self: start;
-}
-
-.branch-card p {
-  align-self: start;
-  overflow: hidden;
-}
-
-.branch-card span {
-  align-self: end;
 }
 
 .marketplace-layout {

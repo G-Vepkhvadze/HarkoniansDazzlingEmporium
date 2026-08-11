@@ -1,21 +1,21 @@
 const branches = [
   {
-    city: "Evercandle",
-    address: "13 Lanternmoth Lane, Brass Bazaar, beneath the singing awning",
+    city: "Balordroch",
+    address: "13 Lanternmoth Road, Brass Bazaar, behind The Singing Awning",
     hours: "Open after breakfast until the moon objects",
   },
   {
-    city: "Thornmere",
+    city: "Katastroni",
     address: "77 Briarhook Row, beside the polite haunted fountain",
     hours: "Open on market days and most Tuesdays",
   },
   {
-    city: "Goldfen Crossing",
-    address: "2 Siltglass Arcade, third door past the floating teapot",
-    hours: "Open whenever the bridge is visible",
+    city: "Hedgewreathe",
+    address: "2 Siltglass Street, third door past the dead legionnaire",
+    hours: "Open whenever it's funny or chaotic",
   },
   {
-    city: "Vellumspire",
+    city: "Reishim",
     address: "404 Quillkeeper Terrace, upper stacks, west stair that was not there yesterday",
     hours: "Open by appointment, omen, or dramatic knock",
   },

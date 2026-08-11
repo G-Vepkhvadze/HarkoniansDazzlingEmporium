@@ -28,7 +28,7 @@ export default function RootLayout({
           </div>
           <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
             <Link href="/find-me">Contact us</Link>
-            <span>© 1492 DR Harkonian&apos;s Dazzling Emporium. All curses disclosed where legally required.</span>
+            <span>© 1492 SGD Harkonian&apos;s Dazzling Emporium. All curses disclosed where legally required.</span>
           </div>
           <Link href="/auth" className="help-link" aria-label="Admin login">?</Link>
         </div>

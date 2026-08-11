@@ -1,6 +1,8 @@
 import { getFeaturedItems } from "@/lib/items";
 import ItemCard from "@/components/ItemCard/ItemCard";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const items = await getFeaturedItems();
   const carouselItems = [...items, ...items];
@@ -40,7 +42,7 @@ export default async function HomePage() {
             <h2>Harkonian buys the strange, sells the useful, and labels the dangerous.</h2>
           </div>
           <p>
-            Founded behind a velvet curtain in the brass-lit markets of Evercandle, the Emporium serves dungeon
+            Founded behind a velvet curtain in the brass-lit markets of Balordroch, the Emporium serves dungeon
             delvers, court mages, retired heroes, and anyone else willing to read a warranty written in infernal
             fine print. Every shelf is inspected by Harkonian personally, or by a broom he trusts nearly as much.
           </p>
@@ -58,7 +60,7 @@ export default async function HomePage() {
             </article>
             <article className="promo-card">
               <h3>Winter Solstice Celebrations</h3>
-              <p>Half-price everwarm mittens with every staff of frost resistance rental.</p>
+              <p>Half-price everwarm mittens with every ring of frost resistance rental.</p>
             </article>
             <article className="promo-card">
               <h3>Adventurer Loyalty Week</h3>
