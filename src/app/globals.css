@@ -153,6 +153,17 @@ h3 {
   line-height: 1.2;
 }
 
+/* Use fantasy font for item card titles and descriptions */
+.item-card h3 {
+  font-family: var(--fantasy-font);
+}
+
+.item-card__description {
+  font-family: var(--fantasy-font);
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .hero-section p,
 .page-intro p,
 .about-panel p,
