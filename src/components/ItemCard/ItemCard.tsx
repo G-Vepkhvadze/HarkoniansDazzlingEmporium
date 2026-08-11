@@ -1,3 +1,5 @@
+"use client";
+import React, { useState } from "react";
 import type { ShopItem } from "@/types/items";
 
 const rarityLabels: Record<ShopItem["rarity"], string> = {
@@ -37,6 +39,7 @@ function formatGold(n: number) {
 }
 
 export default function ItemCard({ item }: { item: ShopItem }) {
+    const [showImage, setShowImage] = useState(Boolean(item.image));
     const baseValue = getValueForRarity(item.rarity, item.id);
     const discount = item.deal && item.discountPercent ? item.discountPercent : 0;
     const saleValue = Math.round(baseValue * (1 - discount / 100));
@@ -47,10 +50,16 @@ export default function ItemCard({ item }: { item: ShopItem }) {
                 {item.deal && item.discountPercent > 0 ? (
                     <span className="deal-tag">{item.discountPercent}% off</span>
                 ) : null}
-                {item.image ? (
-                    <img src={item.image} alt={item.name} className="item-card__image-img" />
+                {showImage && item.image ? (
+                    <img
+                        src={item.image}
+                        alt={item.name}
+                        className="item-card__image-img"
+                        onError={() => setShowImage(false)}
+                        onLoad={() => setShowImage(true)}
+                    />
                 ) : (
-                    <div className="item-card__initial">{item.name.slice(0, 1)}</div>
+                    <div className="item-card__initial">{item.name ? item.name.charAt(0) : "?"}</div>
                 )}
             </div>
             <div className="item-card__body">
