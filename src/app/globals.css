@@ -211,7 +211,7 @@ h3 {
   position: relative;
   display: grid;
   width: 100%;
-  aspect-ratio: 1 / 1; /* keep top area square */
+  aspect-ratio: 4 / 3;
   place-items: center;
   background:
     radial-gradient(circle at 30% 20%, rgba(216, 170, 79, 0.35), transparent 38%),
@@ -251,7 +251,7 @@ h3 {
 .item-card__body {
   display: grid;
   grid-template-rows: 2.4rem 1.2rem minmax(3.6rem, 1fr) auto;
-  gap: 0.25rem; /* smaller gap between name and description, and description and meta */
+  gap: 1rem;
   padding: 0.6rem;
 }
 
