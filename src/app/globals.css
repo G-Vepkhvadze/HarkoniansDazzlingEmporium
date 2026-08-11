@@ -189,7 +189,7 @@ h3 {
 .item-card {
   display: grid;
   grid-template-rows: auto 1fr;
-  min-height: 22rem;
+  min-height: 19rem;
   max-width: 261px;
   overflow: hidden;
   cursor: pointer;
@@ -250,10 +250,18 @@ h3 {
 
 .item-card__body {
   display: grid;
-  grid-template-rows: 3.2rem 1.6rem minmax(5rem, 1fr) auto;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  grid-template-rows: 2.4rem 1.2rem minmax(3.6rem, 1fr) auto;
+  gap: 0.25rem; /* smaller gap between name and description, and description and meta */
+  padding: 0.6rem;
 }
+
+.item-card__meta {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 0.4rem; /* smaller gap between description and stock */
+}
+
 
 .item-card__title-row,
 .item-card__rarity-row {
