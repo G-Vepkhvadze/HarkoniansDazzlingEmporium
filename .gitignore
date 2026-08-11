@@ -1,40 +1,44 @@
-# Dependencies
-node_modules
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+.pnpm-debug.log*
 
-# Next.js build output
-.next
-out
-dist
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# vercel
+.vercel
 
-# Prisma
-prisma/dev.db
-prisma/dev.db-journal
-
-# Logs
-logs
-*.log
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE files
-.vscode
-.idea
-
-# TypeScript
+# typescript
 *.tsbuildinfo
+next-env.d.ts
 
-# Optional: Prisma generated client cache
-node_modules/.prisma
+/src/generated/prisma
