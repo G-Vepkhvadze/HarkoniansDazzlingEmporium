@@ -11,7 +11,7 @@ export default function AuthPage() {
     e.preventDefault();
     if (password === "iamathielsdad") {
       localStorage.setItem("isAdmin", "true");
-      router.push("/admin");
+      router.push("/thesupersecretpagenobodyhasaccessto");
     } else {
       setError("Incorrect password");
     }
