@@ -270,6 +270,29 @@ h3 {
   font-size: 0.9rem;
 }
 
+.item-card__price-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.item-card__price-row .price {
+  color: var(--cream);
+  font-weight: 700;
+}
+
+.original-price {
+  color: var(--muted);
+  text-decoration: line-through;
+  opacity: 0.9;
+}
+
+.sale-price {
+  color: var(--gold-soft);
+  font-weight: 800;
+}
+
+
 .rarity {
   width: fit-content;
   border: 1px solid rgba(245, 230, 200, 0.24);
