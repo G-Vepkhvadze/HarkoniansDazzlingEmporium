@@ -31,6 +31,22 @@ export async function createItem(data: {
     return prisma.item.create({ data });
 }
 
+export async function updateItem(id: string, data: Partial<{
+    image: string;
+    name: string;
+    description: string;
+    rarity: ItemRarity;
+    type: ItemType;
+    deal?: boolean;
+    discountPercent?: number;
+    stock: number;
+}>) {
+    return prisma.item.update({
+        where: { id },
+        data,
+    });
+}
+
 export async function deleteItem(id: string) {
     return prisma.item.delete({
         where: { id },
