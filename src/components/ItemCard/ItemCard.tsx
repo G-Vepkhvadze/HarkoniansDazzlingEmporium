@@ -61,14 +61,9 @@ export default function ItemCard({ item }: { item: ShopItem }) {
                 </div>
                 <p className="item-card__description">{item.description}</p>
                 <div className="item-card__price-row">
-                    {discount > 0 ? (
-                        <>
-                            <span className="original-price">{formatGold(baseValue)}</span>
-                            <span className="sale-price">{formatGold(saleValue)}</span>
-                        </>
-                    ) : (
-                        <span className="price">{formatGold(baseValue)}</span>
-                    )}
+                    <span className={discount > 0 ? "sale-price" : "price"}>
+                        {formatGold(discount > 0 ? saleValue : baseValue)}
+                    </span>
                 </div>
                 <div className="item-card__meta">
                     <span>{typeLabels[item.type]}</span>
