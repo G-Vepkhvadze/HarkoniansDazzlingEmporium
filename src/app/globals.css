@@ -526,7 +526,7 @@ h3 {
 .admin-page {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  padding: 2rem;
+  padding: 1rem;
   box-sizing: border-box;
   background: transparent;
 }
@@ -535,12 +535,12 @@ h3 {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .admin-table th,
 .admin-table td {
-  padding: 0.35rem 0.5rem;
+  padding: 0.3rem 0.3rem;
   vertical-align: middle;
   text-align: left;
   border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -587,5 +587,35 @@ h3 {
 .admin-actions button {
   padding: 0.35rem 0.5rem;
   font-size: 0.85rem;
+}
+
+/* Admin image uploader: make the image box the file chooser */
+.admin-image-uploader {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  border: 1px dashed rgba(216,170,79,0.12);
+  background: rgba(20,14,10,0.45);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.admin-image-uploader img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-image-uploader input[type="file"] {
+  display: none;
+}
+
+.admin-image-placeholder {
+  color: var(--gold-soft);
+  font-weight: 800;
+  font-size: 1.1rem;
 }
 

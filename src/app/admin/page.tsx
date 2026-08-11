@@ -112,10 +112,14 @@ export default function AdminPage() {
             {items.map((item) => (
               <tr key={item.id}>
                 <td className="image">
-                  {item.image ? <img src={item.image} alt="" /> : null}
-                  <div>
-                    <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, item)} />
-                  </div>
+                  <label className="admin-image-uploader" title={`Upload image for ${item.name}`}>
+                    {item.image ? (
+                      <img src={item.image} alt={item.name || ""} />
+                    ) : (
+                      <div className="admin-image-placeholder">?</div>
+                    )}
+                    <input aria-label={`Upload image for ${item.name}`} type="file" accept="image/*" onChange={(e) => handleImageChange(e, item)} />
+                  </label>
                 </td>
                 <td className="name"><input value={item.name} onChange={(e) => updateField(item.id, 'name', e.target.value)} /></td>
                 <td className="description"><input value={item.description} onChange={(e) => updateField(item.id, 'description', e.target.value)} /></td>
