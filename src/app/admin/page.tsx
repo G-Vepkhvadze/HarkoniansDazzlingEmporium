@@ -96,13 +96,13 @@ export default function AdminPage() {
       <div style={{overflow: 'auto'}}>
         <table className="admin-table">
           <colgroup>
-            <col style={{width: '60px'}} />
-            <col style={{width: '16%'}} />
-            <col style={{width: '50%'}} />
-            <col style={{width: '8%'}} />
+            <col style={{width: '65px'}} />
+            <col style={{width: '14%'}} />
+            <col style={{width: 'calc(45% - 80px)'}} />
+            <col style={{width: '11%'}} />
+            <col style={{width: '10%'}} />
+            <col style={{width: '4%'}} />
             <col style={{width: '6%'}} />
-            <col style={{width: '4%'}} />
-            <col style={{width: '4%'}} />
             <col style={{width: '4%'}} />
             <col style={{width: '6%'}} />
           </colgroup>
@@ -114,7 +114,7 @@ export default function AdminPage() {
               <th className="rarity">Rarity</th>
               <th className="type">Type</th>
               <th className="deal">Deal</th>
-              <th className="discount">Discount %</th>
+              <th className="discount">Discount</th>
               <th className="stock">Stock</th>
               <th className="actions">Actions</th>
             </tr>

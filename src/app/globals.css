@@ -188,8 +188,8 @@ h3 {
 
 .item-card {
   display: grid;
-  grid-template-rows: 9rem 1fr;
-  min-height: 25rem;
+  grid-template-rows: auto 1fr;
+  min-height: 22rem;
   max-width: 261px;
   overflow: hidden;
   cursor: pointer;
@@ -210,7 +210,8 @@ h3 {
 .item-card__image {
   position: relative;
   display: grid;
-  height: 9rem;
+  width: 100%;
+  aspect-ratio: 1 / 1; /* keep top area square */
   place-items: center;
   background:
     radial-gradient(circle at 30% 20%, rgba(216, 170, 79, 0.35), transparent 38%),
@@ -230,6 +231,7 @@ h3 {
 
 .item-card__initial {
   z-index: 1;
+  font-size: 2.2rem;
 }
 
 .deal-tag {
@@ -248,9 +250,9 @@ h3 {
 
 .item-card__body {
   display: grid;
-  grid-template-rows: 3.6rem 2rem minmax(6.8rem, 1fr) auto;
-  gap: 0.75rem;
-  padding: 1rem;
+  grid-template-rows: 3.2rem 1.6rem minmax(5rem, 1fr) auto;
+  gap: 0.5rem;
+  padding: 0.75rem;
 }
 
 .item-card__title-row,
@@ -565,7 +567,6 @@ h3 {
 
 .admin-table th.description,
 .admin-table td.description {
-  /* will take remaining space from colgroup */
 }
 
 .admin-table th.rarity,
