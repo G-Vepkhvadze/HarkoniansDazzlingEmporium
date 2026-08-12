@@ -22,11 +22,14 @@ const typeOptions: Array<{ label: string; value: ItemType }> = [
 
 type StockFilter = "ALL" | "IN_STOCK" | "OUT_OF_STOCK";
 
+const ITEMS_PER_PAGE = 18;
+
 export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
     const [search, setSearch] = useState("");
     const [rarity, setRarity] = useState<"ALL" | ItemRarity>("ALL");
     const [type, setType] = useState<"ALL" | ItemType>("ALL");
     const [stock, setStock] = useState<StockFilter>("ALL");
+    const [page, setPage] = useState(1);
 
     const filteredItems = useMemo(() => {
         const normalizedSearch = search.trim().toLowerCase();
@@ -46,6 +49,30 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
         });
     }, [items, rarity, search, stock, type]);
 
+    const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+    const currentPage = Math.min(page, totalPages);
+
+    const pagedItems = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredItems.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredItems, currentPage]);
+
+    function goToPage(nextPage: number) {
+        setPage(Math.min(Math.max(nextPage, 1), totalPages));
+    }
+
+    function updateFilter<T>(setter: (value: T) => void) {
+        return (value: T) => {
+            setter(value);
+            setPage(1);
+        };
+    }
+
+    const handleSearchChange = updateFilter<string>(setSearch);
+    const handleRarityChange = updateFilter<"ALL" | ItemRarity>(setRarity);
+    const handleTypeChange = updateFilter<"ALL" | ItemType>(setType);
+    const handleStockChange = updateFilter<StockFilter>(setStock);
+
     return (
         <div className="marketplace-layout">
             <aside className="filter-panel" aria-label="Marketplace filters">
@@ -53,14 +80,14 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
                     Search
                     <input
                         value={search}
-                        onChange={(event) => setSearch(event.target.value)}
+                        onChange={(event) => handleSearchChange(event.target.value)}
                         placeholder="Potion, armor, scroll..."
                     />
                 </label>
 
                 <label>
                     Rarity
-                    <select value={rarity} onChange={(event) => setRarity(event.target.value as "ALL" | ItemRarity)}>
+                    <select value={rarity} onChange={(event) => handleRarityChange(event.target.value as "ALL" | ItemRarity)}>
                         <option value="ALL">All rarities</option>
                         {rarityOptions.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -72,7 +99,7 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
 
                 <label>
                     Stock
-                    <select value={stock} onChange={(event) => setStock(event.target.value as StockFilter)}>
+                    <select value={stock} onChange={(event) => handleStockChange(event.target.value as StockFilter)}>
                         <option value="ALL">All stock</option>
                         <option value="IN_STOCK">In stock</option>
                         <option value="OUT_OF_STOCK">Out of stock</option>
@@ -81,7 +108,7 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
 
                 <label>
                     Item type
-                    <select value={type} onChange={(event) => setType(event.target.value as "ALL" | ItemType)}>
+                    <select value={type} onChange={(event) => handleTypeChange(event.target.value as "ALL" | ItemType)}>
                         <option value="ALL">All item types</option>
                         {typeOptions.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -97,10 +124,46 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
                     <p>{filteredItems.length} item{filteredItems.length === 1 ? "" : "s"} found</p>
                 </div>
                 <div className="item-grid">
-                    {filteredItems.map((item) => (
+                    {pagedItems.map((item) => (
                         <ItemCard key={item.id} item={item} />
                     ))}
                 </div>
+
+                {totalPages > 1 ? (
+                    <nav className="pagination" aria-label="Marketplace pagination">
+                        <button
+                            type="button"
+                            onClick={() => goToPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+                            <button
+                                type="button"
+                                key={pageNumber}
+                                className={pageNumber === currentPage ? "active" : ""}
+                                onClick={() => goToPage(pageNumber)}
+                                aria-current={pageNumber === currentPage ? "page" : undefined}
+                            >
+                                {pageNumber}
+                            </button>
+                        ))}
+
+                        <button
+                            type="button"
+                            onClick={() => goToPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </button>
+
+                        <span className="pagination__status">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                    </nav>
+                ) : null}
             </section>
         </div>
     );

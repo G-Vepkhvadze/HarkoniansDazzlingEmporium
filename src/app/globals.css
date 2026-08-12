@@ -468,6 +468,52 @@ h3 {
   gap: 1rem;
 }
 
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.pagination button {
+  border: 1px solid rgba(216, 170, 79, 0.35);
+  border-radius: 2px;
+  background: #130d09;
+  color: var(--cream);
+  padding: 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.pagination button:hover:not(:disabled),
+.pagination button:focus-visible {
+  border-color: rgba(240, 207, 134, 0.7);
+  background: rgba(60, 40, 26, 0.9);
+  outline: none;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background: rgba(216, 170, 79, 0.18);
+  border-color: rgba(216, 170, 79, 0.6);
+  font-weight: 700;
+  color: var(--gold-soft);
+}
+
+.pagination__status {
+  color: var(--muted);
+  font-size: 0.85rem;
+  width: 100%;
+  text-align: center;
+}
+
 .branch-card span,
 .contact-strip span {
   color: var(--gold);
@@ -523,18 +569,63 @@ h3 {
   cursor: pointer;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 800px) {
   .site-nav {
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
+    text-align: center;
+  }
+
+  .nav-links {
+    justify-content: center;
+  }
+
+  .hero-section,
+  .page-intro,
+  .section-heading,
+  .about-panel {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
   }
 
   .marketplace-layout {
     grid-template-columns: 1fr;
+    justify-items: center;
   }
 
   .filter-panel {
     position: static;
+    width: min(420px, 100%);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .marketplace-results {
+    width: 100%;
+  }
+
+  .item-grid {
+    justify-items: center;
+  }
+
+  .pagination {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .contact-strip {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .contact-strip div {
+    justify-items: center;
+  }
+
+  .site-footer__inner {
+    flex-direction: column;
+    text-align: center;
   }
 }
 
