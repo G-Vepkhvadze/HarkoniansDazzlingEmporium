@@ -9,12 +9,10 @@ export async function POST(req: Request) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  // Extension always comes from the actual uploaded file
   const ext = file.name.includes(".")
     ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase()
     : ".png";
 
-  // Base filename: prefer the item name (spaces → dashes), else the original file's base name
   const itemName = form.get("itemName");
   const hasItemName = typeof itemName === "string" && itemName.trim().length > 0;
   const rawBase = hasItemName
@@ -45,6 +43,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Store the storage path (e.g. "items/foo.png") in the DB
   return NextResponse.json({ path: storagePath });
 }

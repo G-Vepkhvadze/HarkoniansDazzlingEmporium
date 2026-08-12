@@ -17,7 +17,6 @@ const itemSelect = {
 
 function isStoragePath(image: string | null | undefined): image is string {
     if (!image) return false;
-    // Supabase storage paths look like "items/foo.png" (no leading slash, not a URL)
     return (
         !image.startsWith("http://") &&
         !image.startsWith("https://") &&
@@ -27,7 +26,6 @@ function isStoragePath(image: string | null | undefined): image is string {
 
 async function removeStorageImage(image: string | null | undefined) {
     if (!isStoragePath(image)) return;
-    // image is like "items/foo.png" → bucket "items", path "foo.png"
     const bucket = ITEMS_BUCKET;
     const objectPath = image.slice(bucket.length + 1);
     const supabase = getSupabase();
@@ -78,7 +76,6 @@ export async function updateItem(id: string, data: Partial<{
     discountPercent?: number;
     stock: number;
 }>) {
-    // If the image is being changed, remove the old storage object.
     if (data.image !== undefined) {
         const existing = await prisma.item.findUnique({
             where: { id },

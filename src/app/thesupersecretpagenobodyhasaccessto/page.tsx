@@ -58,7 +58,6 @@ export default function SecretAdminPage() {
     const isAdmin = typeof window !== "undefined" && localStorage.getItem("isAdmin") === "true";
     if (!isAdmin) router.push("/auth");
     else loadItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadItems() {
@@ -86,7 +85,6 @@ export default function SecretAdminPage() {
         const err = await res.json();
         if (err?.error) msg = err.error;
       } catch {
-        // ignore JSON parse errors
       }
       throw new Error(msg);
     }

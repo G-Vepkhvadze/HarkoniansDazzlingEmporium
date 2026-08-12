@@ -14,7 +14,6 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   const body = await req.json();
-  // Support both single-item and batch (array) updates
   if (Array.isArray(body)) {
     const results = await Promise.all(
       body.map((item) => {

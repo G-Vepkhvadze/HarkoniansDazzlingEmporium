@@ -276,7 +276,7 @@ h3 {
   display: flex;
   flex-wrap: nowrap;
   justify-content: space-between;
-  gap: 0.4rem; /* smaller gap between description and stock */
+  gap: 0.4rem;
 }
 
 
@@ -538,7 +538,6 @@ h3 {
   }
 }
 
-/* Admin page full width and tighter table rows */
 .admin-page {
   width: 100vw;
   margin-left: calc(50% - 50vw);
@@ -746,7 +745,6 @@ h3 {
   box-sizing: border-box;
 }
 
-/* Column tuning: use colgroup for proportions; guard against overflow */
 .admin-table th.image,
 .admin-table td.image {
   text-align: center;
@@ -786,7 +784,6 @@ h3 {
   width: 64px;
 }
 
-/* Make text inputs fill available cell space; numeric inputs kept small */
 .admin-table input[type="text"],
 .admin-table select,
 .admin-table textarea {
@@ -813,10 +810,9 @@ h3 {
 }
 
 .admin-table input[type="file"] {
-  display: none; /* handled by uploader */
+  display: none;
 }
 
-/* Reduce row height by shrinking images */
 .admin-table img {
   width: 48px;
   height: 48px;
@@ -824,18 +820,15 @@ h3 {
   border-radius: 4px;
 }
 
-/* Add more breathing room between inline controls (tags) */
 .admin-table td > * {
   margin-right: 0.2rem;
 }
 
-/* Actions buttons small */
 .admin-actions button {
   padding: 0.35rem 0.5rem;
   font-size: 0.85rem;
 }
 
-/* Admin image uploader: make the image box the file chooser */
 .admin-image-uploader {
   display: inline-grid;
   place-items: center;
