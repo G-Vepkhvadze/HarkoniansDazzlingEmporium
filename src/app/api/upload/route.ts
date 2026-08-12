@@ -9,16 +9,26 @@ export async function POST(req: Request) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  // Sanitize the original filename and keep its extension
-  const safeName = file.name
+  // Extension always comes from the actual uploaded file
+  const ext = file.name.includes(".")
+    ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase()
+    : ".png";
+
+  // Base filename: prefer the item name (spaces → dashes), else the original file's base name
+  const itemName = form.get("itemName");
+  const hasItemName = typeof itemName === "string" && itemName.trim().length > 0;
+  const rawBase = hasItemName
+    ? (itemName as string).trim()
+    : file.name.slice(0, file.name.lastIndexOf("."));
+
+  const sluggedBase = rawBase
     .toLowerCase()
-    .replace(/[^a-z0-9.\-]+/g, "-")
+    .replace(/[^a-z0-9]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
-  const ext = safeName.includes(".") ? safeName.slice(safeName.lastIndexOf(".")) : ".png";
-  const baseName = safeName.includes(".") ? safeName.slice(0, safeName.lastIndexOf(".")) : safeName;
-  const filename = `${baseName}-${Date.now()}${ext}`;
+  const base = sluggedBase || "item";
+  const filename = `${base}-${Date.now()}${ext}`;
   const storagePath = `${ITEMS_BUCKET}/${filename}`;
 
   const supabase = getSupabase();

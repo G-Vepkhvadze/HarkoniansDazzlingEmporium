@@ -75,9 +75,10 @@ export default function SecretAdminPage() {
     setTimeout(() => setMessage(""), 3000);
   }
 
-  async function uploadImage(file: File) {
+  async function uploadImage(file: File, itemName?: string) {
     const fd = new FormData();
     fd.append("file", file);
+    if (itemName) fd.append("itemName", itemName);
     const res = await fetch("/api/upload", { method: "POST", body: fd });
     if (!res.ok) {
       let msg = "Upload failed";
@@ -97,7 +98,7 @@ export default function SecretAdminPage() {
     const f = e.target.files?.[0];
     if (!f) return;
     try {
-      const path = await uploadImage(f);
+      const path = await uploadImage(f, item.name);
       updateField(item.id, "image", path);
       flash("Image uploaded");
     } catch (err) {
@@ -392,7 +393,7 @@ export default function SecretAdminPage() {
                   const f = e.target.files?.[0];
                   if (!f) return;
                   try {
-                    const path = await uploadImage(f);
+                    const path = await uploadImage(f, newItem.name);
                     updateNewItem("image", path);
                     flash("Image uploaded");
                   } catch (err) {
