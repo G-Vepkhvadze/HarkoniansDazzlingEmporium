@@ -79,6 +79,16 @@ export default function SecretAdminPage() {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/upload", { method: "POST", body: fd });
+    if (!res.ok) {
+      let msg = "Upload failed";
+      try {
+        const err = await res.json();
+        if (err?.error) msg = err.error;
+      } catch {
+        // ignore JSON parse errors
+      }
+      throw new Error(msg);
+    }
     const data = await res.json();
     return data.path;
   }
@@ -86,8 +96,15 @@ export default function SecretAdminPage() {
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>, item: ItemRow) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const path = await uploadImage(f);
-    updateField(item.id, "image", path);
+    try {
+      const path = await uploadImage(f);
+      updateField(item.id, "image", path);
+      flash("Image uploaded");
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Upload failed", "error");
+    } finally {
+      e.target.value = "";
+    }
   }
 
   function updateField(id: string, key: keyof ItemRow, value: string | number | boolean) {
@@ -374,13 +391,24 @@ export default function SecretAdminPage() {
                 onChange={async (e) => {
                   const f = e.target.files?.[0];
                   if (!f) return;
-                  const fd = new FormData();
-                  fd.append("file", f);
-                  const res = await fetch("/api/upload", { method: "POST", body: fd });
-                  const data = await res.json();
-                  updateNewItem("image", data.path);
+                  try {
+                    const path = await uploadImage(f);
+                    updateNewItem("image", path);
+                    flash("Image uploaded");
+                  } catch (err) {
+                    flash(err instanceof Error ? err.message : "Upload failed", "error");
+                  } finally {
+                    e.target.value = "";
+                  }
                 }}
               />
+              {newItem.image ? (
+                <img
+                  src={getImageUrl(newItem.image)}
+                  alt="New item image preview"
+                  style={{ maxWidth: "120px", maxHeight: "120px", marginTop: "0.5rem", borderRadius: "8px" }}
+                />
+              ) : null}
             </label>
           </div>
           <div className="admin-add-form__actions">
