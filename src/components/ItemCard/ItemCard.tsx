@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { ShopItem } from "@/types/items";
+import { getImageUrl } from "@/lib/imageUrl";
 
 const rarityLabels: Record<ShopItem["rarity"], string> = {
     COMMON: "Common",
@@ -9,6 +10,8 @@ const rarityLabels: Record<ShopItem["rarity"], string> = {
     VERY_RARE: "Very Rare",
     LEGENDARY: "Legendary",
 };
+
+const imageSrc = (item: ShopItem) => getImageUrl(item.image);
 
 function formatGold(n: number) {
     return `${n.toLocaleString()} Gold`;
@@ -27,7 +30,7 @@ export default function ItemCard({ item }: { item: ShopItem }) {
                 ) : null}
                 {showImage && item.image ? (
                     <img
-                        src={item.image}
+                        src={imageSrc(item)}
                         alt={item.name}
                         className="item-card__image-img"
                         loading="lazy"

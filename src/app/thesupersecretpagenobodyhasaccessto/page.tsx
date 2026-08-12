@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getImageUrl } from "@/lib/imageUrl";
 
 interface ItemRow {
   id: string;
@@ -254,7 +255,7 @@ export default function SecretAdminPage() {
                 <td className="image">
                   <label className="admin-image-uploader" title={`Upload image for ${item.name || "item"}`}>
                     {item.image ? (
-                      <img src={item.image} alt={item.name || ""} />
+                      <img src={getImageUrl(item.image)} alt={item.name || ""} />
                     ) : (
                       <div className="admin-image-placeholder">?</div>
                     )}
