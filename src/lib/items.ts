@@ -1,14 +1,29 @@
 import { prisma } from "./prisma";
 import { ItemRarity, ItemType } from "@prisma/client";
 
+const itemSelect = {
+    id: true,
+    image: true,
+    name: true,
+    description: true,
+    rarity: true,
+    type: true,
+    price: true,
+    deal: true,
+    discountPercent: true,
+    stock: true,
+} as const;
+
 export async function getItems() {
     return prisma.item.findMany({
+        select: itemSelect,
         orderBy: { createdAt: "desc" },
     });
 }
 
 export async function getFeaturedItems() {
     return prisma.item.findMany({
+        select: itemSelect,
         where: { deal: true },
         take: 8,
         orderBy: [
@@ -24,6 +39,7 @@ export async function createItem(data: {
     description: string;
     rarity: ItemRarity;
     type: ItemType;
+    price: number;
     deal?: boolean;
     discountPercent?: number;
     stock: number;
@@ -37,6 +53,7 @@ export async function updateItem(id: string, data: Partial<{
     description: string;
     rarity: ItemRarity;
     type: ItemType;
+    price: number;
     deal?: boolean;
     discountPercent?: number;
     stock: number;

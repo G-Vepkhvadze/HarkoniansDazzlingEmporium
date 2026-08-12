@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import type { ShopItem } from "@/types/items";
 
 const rarityLabels: Record<ShopItem["rarity"], string> = {
@@ -10,39 +10,14 @@ const rarityLabels: Record<ShopItem["rarity"], string> = {
     LEGENDARY: "Legendary",
 };
 
-const typeLabels: Record<ShopItem["type"], string> = {
-    WEAPON: "Weapon",
-    ARMOR: "Armor",
-    ACCESSORY: "Accessory",
-    SCROLL: "Scroll",
-    POTION: "Potion",
-};
-
-function getValueForRarity(rarity: ShopItem["rarity"], seed: string) {
-    const ranges: Record<ShopItem["rarity"], [number, number]> = {
-        COMMON: [20, 100],
-        UNCOMMON: [200, 500],
-        RARE: [1000, 2000],
-        VERY_RARE: [2000, 4000],
-        LEGENDARY: [8000, 20000],
-    };
-    const [min, max] = ranges[rarity];
-    // deterministic pseudo-random based on id so values remain stable
-    let sum = 0;
-    for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i);
-    const range = max - min + 1;
-    return min + (sum % range);
-}
-
 function formatGold(n: number) {
     return `${n.toLocaleString()} Gold`;
 }
 
 export default function ItemCard({ item }: { item: ShopItem }) {
     const [showImage, setShowImage] = useState(Boolean(item.image));
-    const baseValue = getValueForRarity(item.rarity, item.id);
     const discount = item.deal && item.discountPercent ? item.discountPercent : 0;
-    const saleValue = Math.round(baseValue * (1 - discount / 100));
+    const saleValue = Math.round(item.price * (1 - discount / 100));
 
     return (
         <article className="item-card" tabIndex={0}>
@@ -55,8 +30,8 @@ export default function ItemCard({ item }: { item: ShopItem }) {
                         src={item.image}
                         alt={item.name}
                         className="item-card__image-img"
+                        loading="lazy"
                         onError={() => setShowImage(false)}
-                        onLoad={() => setShowImage(true)}
                     />
                 ) : (
                     <div className="item-card__initial">{item.name ? item.name.charAt(0) : "?"}</div>
@@ -75,7 +50,7 @@ export default function ItemCard({ item }: { item: ShopItem }) {
                 <p className="item-card__description">{item.description}</p>
                 <div className="item-card__meta">
                     <span className={discount > 0 ? "sale-price" : "price"}>
-                        {formatGold(discount > 0 ? saleValue : baseValue)}
+                        {formatGold(discount > 0 ? saleValue : item.price)}
                     </span>
                     <span className="stock">{item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}</span>
                 </div>

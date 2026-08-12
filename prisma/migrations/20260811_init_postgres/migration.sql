@@ -12,6 +12,7 @@ CREATE TABLE "Item" (
     "description" TEXT NOT NULL,
     "rarity" "ItemRarity" NOT NULL,
     "type" "ItemType" NOT NULL,
+    "price" INTEGER NOT NULL DEFAULT 0,
     "deal" BOOLEAN NOT NULL DEFAULT false,
     "discountPercent" INTEGER NOT NULL DEFAULT 0,
     "stock" INTEGER NOT NULL,

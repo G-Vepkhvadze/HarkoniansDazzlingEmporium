@@ -19,6 +19,7 @@ export interface ShopItem {
     description: string;
     rarity: ItemRarity;
     type: ItemType;
+    price: number;
     deal: boolean;
     discountPercent: number;
     stock: number;

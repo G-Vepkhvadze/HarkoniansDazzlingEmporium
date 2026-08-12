@@ -30,6 +30,7 @@ model Item {
   description String
   rarity      ItemRarity
   type        ItemType
+  price       Int         @default(0)
   deal        Boolean     @default(false)
   discountPercent Int     @default(0)
   stock       Int

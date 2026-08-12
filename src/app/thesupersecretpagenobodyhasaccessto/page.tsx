@@ -9,102 +9,230 @@ interface ItemRow {
   description: string;
   rarity: string;
   type: string;
+  price: number;
   deal: boolean;
   discountPercent: number;
   stock: number;
 }
+
+interface NewItem {
+  image: string;
+  name: string;
+  description: string;
+  rarity: string;
+  type: string;
+  price: string;
+  deal: boolean;
+  discountPercent: string;
+  stock: string;
+}
+
+const RARITIES = ["COMMON", "UNCOMMON", "RARE", "VERY_RARE", "LEGENDARY"];
+const TYPES = ["WEAPON", "ARMOR", "ACCESSORY", "SCROLL", "POTION"];
+
+const emptyNewItem: NewItem = {
+  image: "",
+  name: "",
+  description: "",
+  rarity: "COMMON",
+  type: "POTION",
+  price: "",
+  deal: false,
+  discountPercent: "0",
+  stock: "1",
+};
 
 export default function SecretAdminPage() {
   const router = useRouter();
   const [items, setItems] = useState<ItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [newItem, setNewItem] = useState<any>({ image: "", name: "", description: "", rarity: "COMMON", type: "POTION", deal: false, discountPercent: 0, stock: 1 });
+  const [newItem, setNewItem] = useState<NewItem>(emptyNewItem);
+  const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error">("success");
 
   useEffect(() => {
-    const isAdmin = typeof window !== 'undefined' && localStorage.getItem("isAdmin") === "true";
-    if (!isAdmin) router.push('/auth');
+    const isAdmin = typeof window !== "undefined" && localStorage.getItem("isAdmin") === "true";
+    if (!isAdmin) router.push("/auth");
     else loadItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadItems() {
     setLoading(true);
-    const res = await fetch('/api/items');
+    const res = await fetch("/api/items");
     const data = await res.json();
-    setItems(data || []);
+    setItems(Array.isArray(data) ? data : []);
     setLoading(false);
   }
 
-  async function saveItem(item: ItemRow) {
-    await fetch('/api/items', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) });
-    await loadItems();
-  }
-
-  async function deleteItem(id: string) {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-    await fetch(`/api/items?id=${id}`, { method: 'DELETE' });
-    await loadItems();
+  function flash(msg: string, type: "success" | "error" = "success") {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3000);
   }
 
   async function uploadImage(file: File) {
     const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
     const data = await res.json();
-    return data.path; // e.g., /ItemImages/filename.png
+    return data.path;
   }
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>, item: ItemRow) {
     const f = e.target.files?.[0];
     if (!f) return;
     const path = await uploadImage(f);
-    item.image = path;
-    setItems((s) => s.map((it) => (it.id === item.id ? { ...it, image: path } : it)));
+    updateField(item.id, "image", path);
   }
 
-  function updateField(id: string, key: string, value: any) {
+  function updateField(id: string, key: keyof ItemRow, value: string | number | boolean) {
     setItems((s) => s.map((it) => (it.id === id ? { ...it, [key]: value } : it)));
+    setDirtyIds((prev) => new Set(prev).add(id));
+  }
+
+  const dirtyCount = dirtyIds.size;
+
+  async function saveItem(item: ItemRow) {
+    setSaving(true);
+    try {
+      const payload = { ...item, price: Number(item.price) || 0 };
+      await fetch("/api/items", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      setDirtyIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+      flash("Item saved");
+    } catch {
+      flash("Error saving item", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveAllChanges() {
+    if (dirtyIds.size === 0) return;
+    setSaving(true);
+    const changedItems = items.filter((it) => dirtyIds.has(it.id));
+    try {
+      const res = await fetch("/api/items", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(changedItems.map((it) => ({ ...it, price: Number(it.price) || 0 }))),
+      });
+      if (!res.ok) throw new Error("Batch save failed");
+      setDirtyIds(new Set());
+      flash("All changes saved");
+    } catch {
+      flash("Failed to save changes", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteItem(id: string) {
+    if (!confirm("Are you sure you want to delete this item?")) return;
+    await fetch(`/api/items?id=${id}`, { method: "DELETE" });
+    setItems((s) => s.filter((it) => it.id !== id));
+    setDirtyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  function updateNewItem<K extends keyof NewItem>(key: K, value: NewItem[K]) {
+    setNewItem((s) => ({ ...s, [key]: value }));
   }
 
   async function addNewItem(e: React.FormEvent) {
     e.preventDefault();
-    // validate required fields except image
-    const required = ["name", "description", "rarity", "type", "stock"];
+    const required: (keyof NewItem)[] = ["name", "description", "rarity", "type", "price", "stock"];
     for (const k of required) {
-      if (!newItem[k]) {
+      const v = newItem[k];
+      if (typeof v === "string" && !v.trim()) {
         alert(`${k} is required`);
         return;
       }
     }
-    const payload = { ...newItem };
-    const res = await fetch('/api/items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const price = Number(newItem.price);
+    if (isNaN(price) || price < 0) {
+      alert("Price must be 0 or greater");
+      return;
+    }
+    const payload = {
+      image: newItem.image,
+      name: newItem.name.trim(),
+      description: newItem.description.trim(),
+      rarity: newItem.rarity,
+      type: newItem.type,
+      price,
+      deal: newItem.deal,
+      discountPercent: Number(newItem.discountPercent) || 0,
+      stock: Number(newItem.stock) || 0,
+    };
+    const res = await fetch("/api/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
     if (res.ok) {
-      setNewItem({ image: "", name: "", description: "", rarity: "COMMON", type: "POTION", deal: false, discountPercent: 0, stock: 1 });
+      setNewItem(emptyNewItem);
       setShowAdd(false);
       await loadItems();
+      flash("Item added");
     } else {
-      alert('Failed to add item');
+      alert("Failed to add item");
     }
   }
 
-  if (loading) return <div style={{padding: '2rem'}}>Loading…</div>;
+  if (loading) return <div style={{ padding: "2rem" }}>Loading…</div>;
 
   return (
     <div className="admin-page">
-      <h1>Admin — Item Manager (Secret)</h1>
-      <div style={{overflow: 'auto'}}>
+      <div className="admin-toolbar">
+        <div>
+          <h1>Admin — Item Manager</h1>
+          <p className="admin-subtitle">
+            {items.length} item{items.length === 1 ? "" : "s"} ·{" "}
+            {dirtyCount > 0 ? `${dirtyCount} unsaved change${dirtyCount === 1 ? "" : "s"}` : "All changes saved"}
+          </p>
+        </div>
+        <div className="admin-toolbar__actions">
+          {dirtyCount > 0 ? (
+            <button className="admin-btn admin-btn--primary" onClick={saveAllChanges} disabled={saving}>
+              {saving ? "Saving…" : `Save All Changes (${dirtyCount})`}
+            </button>
+          ) : null}
+          <button className="admin-btn" onClick={() => setShowAdd((s) => !s)}>
+            {showAdd ? "Cancel" : "Add New Item"}
+          </button>
+        </div>
+      </div>
+
+      {message ? <div className={`admin-toast admin-toast--${messageType}`}>{message}</div> : null}
+
+      <div style={{ overflow: "auto" }}>
         <table className="admin-table">
           <colgroup>
-            <col style={{width: '65px'}} />
-            <col style={{width: '14%'}} />
-            <col style={{width: 'calc(45% - 80px)'}} />
-            <col style={{width: '11%'}} />
-            <col style={{width: '10%'}} />
-            <col style={{width: '4%'}} />
-            <col style={{width: '6%'}} />
-            <col style={{width: '4%'}} />
-            <col style={{width: '6%'}} />
+            <col style={{ width: "56px" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "5%" }} />
+            <col style={{ width: "6%" }} />
+            <col style={{ width: "6%" }} />
+            <col style={{ width: "10%" }} />
           </colgroup>
           <thead>
             <tr>
@@ -113,51 +241,79 @@ export default function SecretAdminPage() {
               <th className="description">Description</th>
               <th className="rarity">Rarity</th>
               <th className="type">Type</th>
+              <th className="price">Price (Gold)</th>
               <th className="deal">Deal</th>
-              <th className="discount">Discount</th>
+              <th className="discount">Disc%</th>
               <th className="stock">Stock</th>
               <th className="actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id}>
+              <tr key={item.id} className={dirtyIds.has(item.id) ? "row-dirty" : ""}>
                 <td className="image">
-                  <label className="admin-image-uploader" title={`Upload image for ${item.name}`}>
+                  <label className="admin-image-uploader" title={`Upload image for ${item.name || "item"}`}>
                     {item.image ? (
                       <img src={item.image} alt={item.name || ""} />
                     ) : (
                       <div className="admin-image-placeholder">?</div>
                     )}
-                    <input aria-label={`Upload image for ${item.name}`} type="file" accept="image/*" onChange={(e) => handleImageChange(e, item)} />
+                    <input aria-label={`Upload image for ${item.name || "item"}`} type="file" accept="image/*" onChange={(e) => handleImageChange(e, item)} />
                   </label>
                 </td>
-                <td className="name"><input value={item.name} onChange={(e) => updateField(item.id, 'name', e.target.value)} /></td>
-                <td className="description"><textarea value={item.description} onChange={(e) => updateField(item.id, 'description', e.target.value)} /></td>
+                <td className="name">
+                  <input value={item.name} onChange={(e) => updateField(item.id, "name", e.target.value)} />
+                </td>
+                <td className="description">
+                  <textarea value={item.description} onChange={(e) => updateField(item.id, "description", e.target.value)} />
+                </td>
                 <td className="rarity">
-                  <select value={item.rarity} onChange={(e) => updateField(item.id, 'rarity', e.target.value)}>
-                    <option value="COMMON">COMMON</option>
-                    <option value="UNCOMMON">UNCOMMON</option>
-                    <option value="RARE">RARE</option>
-                    <option value="VERY_RARE">VERY_RARE</option>
-                    <option value="LEGENDARY">LEGENDARY</option>
+                  <select value={item.rarity} onChange={(e) => updateField(item.id, "rarity", e.target.value)}>
+                    {RARITIES.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </td>
                 <td className="type">
-                  <select value={item.type} onChange={(e) => updateField(item.id, 'type', e.target.value)}>
-                    <option value="WEAPON">WEAPON</option>
-                    <option value="ARMOR">ARMOR</option>
-                    <option value="ACCESSORY">ACCESSORY</option>
-                    <option value="SCROLL">SCROLL</option>
-                    <option value="POTION">POTION</option>
+                  <select value={item.type} onChange={(e) => updateField(item.id, "type", e.target.value)}>
+                    {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </td>
-                <td className="deal"><input type="checkbox" checked={item.deal} onChange={(e) => updateField(item.id, 'deal', e.target.checked)} /></td>
-                <td className="discount"><input type="number" value={item.discountPercent ?? 0} onChange={(e) => updateField(item.id, 'discountPercent', Number(e.target.value))} /></td>
-                <td className="stock"><input type="number" value={item.stock} onChange={(e) => updateField(item.id, 'stock', Number(e.target.value))} /></td>
+                <td className="price">
+                  <input
+                    type="number"
+                    min="0"
+                    value={item.price}
+                    onChange={(e) => updateField(item.id, "price", Number(e.target.value))}
+                  />
+                </td>
+                <td className="deal">
+                  <input type="checkbox" checked={item.deal} onChange={(e) => updateField(item.id, "deal", e.target.checked)} />
+                </td>
+                <td className="discount">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={item.discountPercent ?? 0}
+                    onChange={(e) => updateField(item.id, "discountPercent", Number(e.target.value))}
+                  />
+                </td>
+                <td className="stock">
+                  <input
+                    type="number"
+                    min="0"
+                    value={item.stock}
+                    onChange={(e) => updateField(item.id, "stock", Number(e.target.value))}
+                  />
+                </td>
                 <td className="admin-actions">
-                  <button onClick={() => saveItem(item)}>Save</button>
-                  <button onClick={() => deleteItem(item.id)}>Delete</button>
+                  {dirtyIds.has(item.id) ? (
+                    <button className="admin-btn admin-btn--small" onClick={() => saveItem(item)} disabled={saving}>
+                      Save
+                    </button>
+                  ) : null}
+                  <button className="admin-btn admin-btn--small admin-btn--danger" onClick={() => deleteItem(item.id)}>
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -165,67 +321,69 @@ export default function SecretAdminPage() {
         </table>
       </div>
 
-      <div style={{marginTop: '1rem'}}>
-        <button onClick={() => setShowAdd((s) => !s)}>{showAdd ? 'Cancel' : 'Add New Item'}</button>
-      </div>
+      {items.length === 0 ? <p className="admin-empty">No items yet — add your first item.</p> : null}
 
       {showAdd ? (
-        <form onSubmit={addNewItem} style={{marginTop: '1rem', display: 'grid', gap: '0.5rem'}}> 
-          <label>
-            Name
-            <input required value={newItem.name} onChange={(e) => setNewItem((s:any)=>({...s, name: e.target.value}))} />
-          </label>
-          <label>
-            Description
-            <textarea required value={newItem.description} onChange={(e) => setNewItem((s:any)=>({...s, description: e.target.value}))} />
-          </label>
-          <label>
-            Rarity
-            <select value={newItem.rarity} onChange={(e) => setNewItem((s:any)=>({...s, rarity: e.target.value}))}>
-              <option value="COMMON">COMMON</option>
-              <option value="UNCOMMON">UNCOMMON</option>
-              <option value="RARE">RARE</option>
-              <option value="VERY_RARE">VERY_RARE</option>
-              <option value="LEGENDARY">LEGENDARY</option>
-            </select>
-          </label>
-          <label>
-            Type
-            <select value={newItem.type} onChange={(e) => setNewItem((s:any)=>({...s, type: e.target.value}))}>
-              <option value="WEAPON">WEAPON</option>
-              <option value="ARMOR">ARMOR</option>
-              <option value="ACCESSORY">ACCESSORY</option>
-              <option value="SCROLL">SCROLL</option>
-              <option value="POTION">POTION</option>
-            </select>
-          </label>
-          <label>
-            Deal
-            <input type="checkbox" checked={newItem.deal} onChange={(e) => setNewItem((s:any)=>({...s, deal: e.target.checked}))} />
-          </label>
-          {newItem.deal ? (
+        <form onSubmit={addNewItem} className="admin-add-form">
+          <h2>Add New Item</h2>
+          <div className="admin-add-form__grid">
             <label>
-              Discount %
-              <input type="number" value={newItem.discountPercent} onChange={(e) => setNewItem((s:any)=>({...s, discountPercent: Number(e.target.value)}))} />
+              Name <span className="req">*</span>
+              <input required value={newItem.name} onChange={(e) => updateNewItem("name", e.target.value)} />
             </label>
-          ) : null}
-          <label>
-            Stock
-            <input required type="number" value={newItem.stock} onChange={(e) => setNewItem((s:any)=>({...s, stock: Number(e.target.value)}))} />
-          </label>
-          <label>
-            Image (optional)
-            <input type="file" onChange={async (e)=>{
-              const f = e.target.files?.[0];
-              if (!f) return;
-              const fd = new FormData(); fd.append('file', f);
-              const res = await fetch('/api/upload', { method: 'POST', body: fd });
-              const data = await res.json();
-              setNewItem((s:any)=>({...s, image: data.path}));
-            }} />
-          </label>
-          <div>
-            <button type="submit">Add Item</button>
+            <label>
+              Rarity <span className="req">*</span>
+              <select value={newItem.rarity} onChange={(e) => updateNewItem("rarity", e.target.value)}>
+                {RARITIES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </label>
+            <label>
+              Type <span className="req">*</span>
+              <select value={newItem.type} onChange={(e) => updateNewItem("type", e.target.value)}>
+                {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </label>
+            <label>
+              Price (Gold) <span className="req">*</span>
+              <input required type="number" min="0" value={newItem.price} onChange={(e) => updateNewItem("price", e.target.value)} />
+            </label>
+            <label>
+              Stock <span className="req">*</span>
+              <input required type="number" min="0" value={newItem.stock} onChange={(e) => updateNewItem("stock", e.target.value)} />
+            </label>
+            <label className="checkbox-field">
+              <input type="checkbox" checked={newItem.deal} onChange={(e) => updateNewItem("deal", e.target.checked)} />
+              Deal
+            </label>
+            {newItem.deal ? (
+              <label>
+                Discount %
+                <input type="number" min="0" max="100" value={newItem.discountPercent} onChange={(e) => updateNewItem("discountPercent", e.target.value)} />
+              </label>
+            ) : null}
+            <label className="full-span">
+              Description <span className="req">*</span>
+              <textarea required rows={3} value={newItem.description} onChange={(e) => updateNewItem("description", e.target.value)} />
+            </label>
+            <label className="full-span">
+              Image (optional)
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  const fd = new FormData();
+                  fd.append("file", f);
+                  const res = await fetch("/api/upload", { method: "POST", body: fd });
+                  const data = await res.json();
+                  updateNewItem("image", data.path);
+                }}
+              />
+            </label>
+          </div>
+          <div className="admin-add-form__actions">
+            <button type="submit" className="admin-btn admin-btn--primary">Add Item</button>
           </div>
         </form>
       ) : null}

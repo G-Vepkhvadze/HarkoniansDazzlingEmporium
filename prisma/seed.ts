@@ -17,6 +17,7 @@ async function main() {
                     description: item.description,
                     rarity: item.rarity,
                     type: item.type,
+                    price: item.price,
                     deal: item.deal,
                     discountPercent: item.discountPercent,
                     stock: item.stock,
