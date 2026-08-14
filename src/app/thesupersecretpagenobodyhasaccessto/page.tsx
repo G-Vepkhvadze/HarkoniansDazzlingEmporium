@@ -128,6 +128,7 @@ export default function SecretAdminPage() {
         return next;
       });
       flash("Item saved");
+      router.refresh();
     } catch {
       flash("Error saving item", "error");
     } finally {
@@ -148,6 +149,7 @@ export default function SecretAdminPage() {
       if (!res.ok) throw new Error("Batch save failed");
       setDirtyIds(new Set());
       flash("All changes saved");
+      router.refresh();
     } catch {
       flash("Failed to save changes", "error");
     } finally {
@@ -164,6 +166,7 @@ export default function SecretAdminPage() {
       next.delete(id);
       return next;
     });
+    router.refresh();
   }
 
   function updateNewItem<K extends keyof NewItem>(key: K, value: NewItem[K]) {
@@ -206,6 +209,7 @@ export default function SecretAdminPage() {
       setShowAdd(false);
       await loadItems();
       flash("Item added");
+      router.refresh();
     } else {
       alert("Failed to add item");
     }
