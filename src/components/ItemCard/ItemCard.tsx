@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ShopItem } from "@/types/items";
 import { getImageUrl } from "@/lib/imageUrl";
 
@@ -18,12 +19,18 @@ function formatGold(n: number) {
 }
 
 export default function ItemCard({ item }: { item: ShopItem }) {
+    const router = useRouter();
     const [showImage, setShowImage] = useState(Boolean(item.image));
     const discount = item.deal && item.discountPercent ? item.discountPercent : 0;
     const saleValue = Math.round(item.price * (1 - discount / 100));
 
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      router.push(`/item/${item.id}`);
+    };
+
     return (
-        <article className="item-card" tabIndex={0}>
+        <article className="item-card" tabIndex={0} onClick={handleClick} style={{ cursor: "pointer" }}>
             <div className="item-card__image" aria-hidden="true">
                 {item.deal && item.discountPercent > 0 ? (
                     <span className="deal-tag">{item.discountPercent}% off</span>

@@ -37,4 +37,18 @@ model Item {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  reviews Review[]
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  itemId    String
+  item      Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  authorName String
+  content   String
+
+  createdAt DateTime @default(now())
+
+  @@unique([itemId, authorName])
 }
