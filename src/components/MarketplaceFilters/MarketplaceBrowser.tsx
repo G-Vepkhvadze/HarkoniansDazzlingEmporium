@@ -113,7 +113,7 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
                 <label>
                     <div className="filter-label-wrapper">
                     Search
-                    <Image src="/Athiel-Searcher.gif" alt="Athiel" width={50} height={50} />
+                    <Image src="/Athiel-Searcher.gif" alt="Athiel" width={30} height={30} />
                     </div>
                     <input
                         value={search}
