@@ -203,6 +203,12 @@ h3 {
   background: linear-gradient(145deg, rgba(45, 30, 20, 0.92), rgba(22, 15, 10, 0.95));
 }
 
+.filter-label-wrapper {
+  display: flex;
+  flex-direction: row;
+    justify-content: space-between;
+}
+
 .item-card {
   display: grid;
   grid-template-rows: auto 1fr;

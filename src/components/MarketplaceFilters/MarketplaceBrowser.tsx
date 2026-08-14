@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import ItemCard from "@/components/ItemCard/ItemCard";
 import type { ItemRarity, ItemType, ShopItem } from "@/types/items";
 
@@ -110,14 +111,16 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
         <div className="marketplace-layout">
             <aside className="filter-panel" aria-label="Marketplace filters">
                 <label>
+                    <div className="filter-label-wrapper">
                     Search
+                    <Image src="/Athiel-Searcher.gif" alt="Athiel" width={50} height={50} />
+                    </div>
                     <input
                         value={search}
                         onChange={(event) => handleSearchChange(event.target.value)}
                         placeholder="Potion, armor, scroll..."
                     />
                 </label>
-
                 <label>
                     Rarity
                     <select value={rarity} onChange={(event) => handleRarityChange(event.target.value as "ALL" | ItemRarity)}>
