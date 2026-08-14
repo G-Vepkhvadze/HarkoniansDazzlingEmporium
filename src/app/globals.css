@@ -661,6 +661,9 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-inline: 2rem;
+  margin-block: 1rem;
+  width: auto;
 }
 
 .admin-btn {
@@ -1202,4 +1205,8 @@ h3 {
   text-align: center;
   font-size: 0.9rem;
   margin: 0.5rem 0 0;
+}
+
+.auth-input-box {
+  border: 1px solid rgba(216, 170, 79, 0.35);
 }

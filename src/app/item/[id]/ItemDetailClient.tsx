@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { getImageUrl } from "@/lib/imageUrl";
+import { Filter } from "bad-words";
+import { isLoggedIn, getUsername } from "@/lib/auth";
 
 interface Review {
   id: string;
@@ -56,6 +58,38 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  const filter = new Filter({
+    placeHolder: "***",
+  });
+  
+  // - case insensitive
+  const exceptions = [
+    "fuck", "shit", "cunt", "twat", "bitch", "ass", 
+    "asshole", "dickhead", "shithead", "cunthead", "twathead",
+    "bitchhead", "slut", "slutty", "fucker"
+  ];
+
+  exceptions.forEach(word => {
+    filter.removeWords(word);
+  });
+
+  const exceptionVariations = exceptions.map(w => w.toUpperCase());
+  exceptionVariations.forEach(word => {
+    filter.removeWords(word);
+  });
+
+  useEffect(() => {
+    setLoggedIn(isLoggedIn());
+    
+    const handleStorageChange = () => {
+      setLoggedIn(isLoggedIn());
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const imageSrc = item.image ? getImageUrl(item.image) : null;
   const discount = item.deal && item.discountPercent ? item.discountPercent : 0;
@@ -74,6 +108,18 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
       return;
     }
 
+    const filteredName = filter.clean(authorName.trim());
+    const filteredContent = filter.clean(newReview.trim());
+
+    if (filteredName !== authorName.trim()) {
+      setError("Name contains inappropriate language.");
+      return;
+    }
+    if (filteredContent !== newReview.trim()) {
+      setError("Review contains inappropriate language.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -81,7 +127,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
       const res = await fetch(`/api/reviews?itemId=${item.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id, authorName: authorName.trim(), content: newReview.trim() }),
+        body: JSON.stringify({ itemId: item.id, authorName: filteredName, content: filteredContent }),
       });
 
       if (!res.ok) {
@@ -104,11 +150,13 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   };
 
   const handleDeleteReview = async (reviewId: string, reviewAuthor: string) => {
-    const storedName = localStorage.getItem("reviewAuthorName");
-    if (storedName !== reviewAuthor) {
-      setError("You can only delete your own reviews.");
+    // Check if user is logged in
+    if (!loggedIn) {
+      setError("You must be logged in as admin to delete reviews.");
       return;
     }
+
+    const adminUsername = getUsername();
 
     if (!confirm("Are you sure you want to delete this review?")) return;
 
@@ -132,15 +180,11 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
 
   const handleStoreAuthorName = (name: string) => {
     setAuthorName(name);
-    if (name.trim()) {
-      localStorage.setItem("reviewAuthorName", name.trim());
-    }
   };
 
   return (
     <div className="item-detail-page">
       <div className="item-detail-container">
-        {/* Image Box */}
         <div
           className="item-detail-image-box"
         >
@@ -158,7 +202,6 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
           )}
         </div>
 
-        {/* Item Info */}
         <div className="item-detail-info">
           <h1 className="item-detail-name">{item.name}</h1>
           <p className="item-detail-type">
@@ -184,7 +227,6 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
           </p>
         </div>
 
-        {/* Review Section */}
         <section className="item-detail-reviews">
           <h2>Reviews</h2>
           

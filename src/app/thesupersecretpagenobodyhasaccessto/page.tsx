@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getImageUrl } from "@/lib/imageUrl";
+import { isLoggedIn, login, logout } from "@/lib/auth";
 
 interface ItemRow {
   id: string;
@@ -53,12 +54,23 @@ export default function SecretAdminPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    const isAdmin = typeof window !== "undefined" && localStorage.getItem("isAdmin") === "true";
-    if (!isAdmin) router.push("/auth");
-    else loadItems();
-  }, []);
+    const logged = isLoggedIn();
+    setLoggedIn(logged);
+    if (!logged) {
+      router.push("/auth");
+    } else {
+      loadItems();
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    logout();
+    setLoggedIn(false);
+    router.push("/auth");
+  };
 
   async function loadItems() {
     setLoading(true);
@@ -217,6 +229,12 @@ export default function SecretAdminPage() {
 
   if (loading) return <div style={{ padding: "2rem" }}>Loading…</div>;
 
+  if (!loggedIn) {
+    // Should be redirected by useEffect, but just in case
+    router.push("/auth");
+    return null;
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-toolbar">
@@ -226,16 +244,6 @@ export default function SecretAdminPage() {
             {items.length} item{items.length === 1 ? "" : "s"} ·{" "}
             {dirtyCount > 0 ? `${dirtyCount} unsaved change${dirtyCount === 1 ? "" : "s"}` : "All changes saved"}
           </p>
-        </div>
-        <div className="admin-toolbar__actions">
-          {dirtyCount > 0 ? (
-            <button className="admin-btn admin-btn--primary" onClick={saveAllChanges} disabled={saving}>
-              {saving ? "Saving…" : `Save All Changes (${dirtyCount})`}
-            </button>
-          ) : null}
-          <button className="admin-btn" onClick={() => setShowAdd((s) => !s)}>
-            {showAdd ? "Cancel" : "Add New Item"}
-          </button>
         </div>
       </div>
 
@@ -341,6 +349,16 @@ export default function SecretAdminPage() {
           </tbody>
         </table>
       </div>
+      <div className="admin-toolbar__actions">
+        {dirtyCount > 0 ? (
+            <button className="admin-btn admin-btn--primary" onClick={saveAllChanges} disabled={saving}>
+              {saving ? "Saving…" : `Save All Changes (${dirtyCount})`}
+            </button>
+        ) : null}
+        <button className="admin-btn" onClick={() => setShowAdd((s) => !s)}>
+          {showAdd ? "Cancel" : "Add New Item"}
+        </button>
+      </div>
 
       {items.length === 0 ? <p className="admin-empty">No items yet — add your first item.</p> : null}
 
@@ -419,6 +437,12 @@ export default function SecretAdminPage() {
           </div>
         </form>
       ) : null}
+      
+      <div style={{ marginTop: "2rem", textAlign: "center" }}>
+        <button className="admin-btn admin-btn--danger" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
     </div>
   );
 }

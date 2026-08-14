@@ -2,6 +2,7 @@ import "./globals.css";
 import { Cinzel_Decorative, Uncial_Antiqua } from "next/font/google";
 import Navigation from "@/components/Navigation/Navigation";
 import Link from "next/link";
+import AdminLink from "@/components/AdminLink/AdminLink";
 
 const cinzel = Cinzel_Decorative({
   subsets: ["latin"],
@@ -41,9 +42,7 @@ export default function RootLayout({
               <Link href="/find-me">Contact us</Link>
               <span>{"© 1492 SGD Harkonian's Dazzling Emporium. All curses disclosed where legally required."}</span>
             </div>
-            <Link href="/auth" className="help-link" aria-label="Admin login">
-              ?
-            </Link>
+            <AdminLink />
           </div>
         </footer>
       </body>

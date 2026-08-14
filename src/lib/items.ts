@@ -13,6 +13,7 @@ const itemSelect = {
     deal: true,
     discountPercent: true,
     stock: true,
+    createdAt: true,
 } as const;
 
 function isStoragePath(image: string | null | undefined): image is string {

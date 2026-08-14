@@ -24,11 +24,21 @@ type StockFilter = "ALL" | "IN_STOCK" | "OUT_OF_STOCK";
 
 const ITEMS_PER_PAGE = 18;
 
+type SortFilter = "NEWEST" | "OLDEST" | "MOST_EXPENSIVE" | "CHEAPEST";
+
+const sortOptions: Array<{ label: string; value: SortFilter }> = [
+    { label: "Newest", value: "NEWEST" },
+    { label: "Oldest", value: "OLDEST" },
+    { label: "Most Expensive", value: "MOST_EXPENSIVE" },
+    { label: "Cheapest", value: "CHEAPEST" },
+];
+
 export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
     const [search, setSearch] = useState("");
     const [rarity, setRarity] = useState<"ALL" | ItemRarity>("ALL");
     const [type, setType] = useState<"ALL" | ItemType>("ALL");
     const [stock, setStock] = useState<StockFilter>("ALL");
+    const [sort, setSort] = useState<SortFilter>("NEWEST");
     const [page, setPage] = useState(1);
 
     const filteredItems = useMemo(() => {
@@ -49,13 +59,35 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
         });
     }, [items, rarity, search, stock, type]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+    // Apply sorting to filtered items
+    const sortedItems = useMemo(() => {
+        const sorted = [...filteredItems];
+        
+        switch (sort) {
+            case "NEWEST":
+                return sorted.sort((a, b) => 
+                    (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
+                );
+            case "OLDEST":
+                return sorted.sort((a, b) => 
+                    (a.createdAt ? new Date(a.createdAt).getTime() : 0) - (b.createdAt ? new Date(b.createdAt).getTime() : 0)
+                );
+            case "MOST_EXPENSIVE":
+                return sorted.sort((a, b) => b.price - a.price);
+            case "CHEAPEST":
+                return sorted.sort((a, b) => a.price - b.price);
+            default:
+                return sorted;
+        }
+    }, [filteredItems, sort]);
+
+    const totalPages = Math.max(1, Math.ceil(sortedItems.length / ITEMS_PER_PAGE));
     const currentPage = Math.min(page, totalPages);
 
     const pagedItems = useMemo(() => {
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredItems.slice(start, start + ITEMS_PER_PAGE);
-    }, [filteredItems, currentPage]);
+        return sortedItems.slice(start, start + ITEMS_PER_PAGE);
+    }, [sortedItems, currentPage]);
 
     function goToPage(nextPage: number) {
         setPage(Math.min(Math.max(nextPage, 1), totalPages));
@@ -72,6 +104,7 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
     const handleRarityChange = updateFilter<"ALL" | ItemRarity>(setRarity);
     const handleTypeChange = updateFilter<"ALL" | ItemType>(setType);
     const handleStockChange = updateFilter<StockFilter>(setStock);
+    const handleSortChange = updateFilter<SortFilter>(setSort);
 
     return (
         <div className="marketplace-layout">
@@ -117,11 +150,22 @@ export default function MarketplaceBrowser({ items }: { items: ShopItem[] }) {
                         ))}
                     </select>
                 </label>
+
+                <label>
+                    Sort by
+                    <select value={sort} onChange={(event) => handleSortChange(event.target.value as SortFilter)}>
+                        {sortOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                </label>
             </aside>
 
             <section className="marketplace-results" aria-live="polite">
                 <div className="section-heading">
-                    <p>{filteredItems.length} item{filteredItems.length === 1 ? "" : "s"} found</p>
+                    <p>{sortedItems.length} item{sortedItems.length === 1 ? "" : "s"} found</p>
                 </div>
                 <div className="item-grid">
                     {pagedItems.map((item) => (

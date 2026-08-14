@@ -73,23 +73,23 @@ export default async function ItemDetailPage({
       i.type,
       i.price,
       i.deal,
-      i."discountPercent" AS "discountPercent",
+      i."discountPercent",
       i.stock,
       COALESCE(
-        json_agg(
-          json_build_object(
-            'id', r.id,
-            'itemId', r."itemId",
-            'authorName', r."authorName",
-            'content', r."content",
-            'createdAt', r."createdAt"
-          )
-        ) FILTER (WHERE r.id IS NOT NULL),
-        '[]'::json
+          json_agg(
+              json_build_object(
+                  'id', r.id,
+                  'itemId', r."itemId",
+                  'authorName', r."authorName",
+                  'content', r.content,
+                  'createdAt', r."createdAt"
+              )
+          ) FILTER (WHERE r.id IS NOT NULL),
+          '[]'::json
       ) AS reviews
     FROM "Item" i
-    LEFT JOIN "Review" r
-      ON i.id = r."itemId"
+           LEFT JOIN "Review" r
+                     ON i.id = r."itemId"
     WHERE i.id = ${id}
     GROUP BY
       i.id,

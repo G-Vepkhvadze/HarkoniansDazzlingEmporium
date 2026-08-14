@@ -23,4 +23,5 @@ export interface ShopItem {
     deal: boolean;
     discountPercent: number;
     stock: number;
+    createdAt?: Date;
 }
