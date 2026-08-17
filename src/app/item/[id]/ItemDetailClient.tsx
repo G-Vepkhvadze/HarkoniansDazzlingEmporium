@@ -266,12 +266,6 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
                 width: "80px",
               }}
             />
-            <span style={{
-              color: "var(--muted)",
-              fontSize: "0.85rem",
-            }}>
-              Max: {item.stock}
-            </span>
           </div>
           <div style={{
             marginTop: "1rem",
