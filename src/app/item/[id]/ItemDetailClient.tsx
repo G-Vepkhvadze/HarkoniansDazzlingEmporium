@@ -220,50 +220,6 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
           </p>
         </div>
 
-        <section className="item-detail-reviews">
-          <h2>Reviews</h2>
-          
-          {reviews.length === 0 ? (
-            <p className="item-detail-no-reviews">No reviews yet. Be the first to review this item!</p>
-          ) : (
-            <div className="item-detail-reviews-list">
-              {reviews.map((review) => (
-                <div key={review.id} className="item-detail-review">
-                  <div className="item-detail-review-header">
-                    <span className="item-detail-review-author">{review.authorName}</span>
-                    <button
-                      className="item-detail-review-delete"
-                      onClick={() => handleDeleteReview(review.id, review.authorName)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  <p className="item-detail-review-content">{review.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmitReview} className="item-detail-review-form">
-            <h3>Leave a Review</h3>
-            <div className="item-detail-review-inputs">
-              <textarea
-                placeholder="Your review..."
-                value={newReview}
-                onChange={(e) => setNewReview(e.target.value)}
-                required
-                className="item-detail-review-textarea"
-                rows={4}
-              />
-            </div>
-            <button type="submit" disabled={loading} className="item-detail-review-submit">
-              {loading ? "Submitting..." : "Submit Review"}
-            </button>
-            {error && <p className="item-detail-error">{error}</p>}
-            {success && <p className="item-detail-success">{success}</p>}
-          </form>
-        </section>
-
         <section className="item-detail-purchase" style={{
           marginTop: "2rem",
           padding: "1.5rem",
@@ -345,13 +301,56 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
                 transition: "background 140ms ease, border-color 140ms ease",
               }}
               onClick={() => {
-                // Placeholder for future purchase logic
                 alert("Purchase functionality coming soon!");
               }}
             >
               Purchase
             </button>
           </div>
+        </section>
+
+        <section className="item-detail-reviews">
+          <h2>Reviews</h2>
+          
+          {reviews.length === 0 ? (
+            <p className="item-detail-no-reviews">No reviews yet. Be the first to review this item!</p>
+          ) : (
+            <div className="item-detail-reviews-list">
+              {reviews.map((review) => (
+                <div key={review.id} className="item-detail-review">
+                  <div className="item-detail-review-header">
+                    <span className="item-detail-review-author">{review.authorName}</span>
+                    <button
+                      className="item-detail-review-delete"
+                      onClick={() => handleDeleteReview(review.id, review.authorName)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <p className="item-detail-review-content">{review.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmitReview} className="item-detail-review-form">
+            <h3>Leave a Review</h3>
+            <div className="item-detail-review-inputs">
+              <textarea
+                placeholder="Your review..."
+                value={newReview}
+                onChange={(e) => setNewReview(e.target.value)}
+                required
+                className="item-detail-review-textarea"
+                rows={4}
+              />
+            </div>
+            <button type="submit" disabled={loading} className="item-detail-review-submit">
+              {loading ? "Submitting..." : "Submit Review"}
+            </button>
+            {error && <p className="item-detail-error">{error}</p>}
+            {success && <p className="item-detail-success">{success}</p>}
+          </form>
         </section>
       </div>
     </div>
