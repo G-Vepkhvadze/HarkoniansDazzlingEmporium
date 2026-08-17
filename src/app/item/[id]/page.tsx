@@ -46,15 +46,17 @@ interface FormattedItem {
   reviews: Review[];
 }
 
-export async function generateStaticParams() {
-  const items = await prisma.item.findMany({
-    select: { id: true },
-  });
+// Disable static generation to avoid connection pool exhaustion during build
+// Item pages will be rendered dynamically on demand
+export const dynamic = 'force-dynamic';
 
-  return items.map((item) => ({
-    id: item.id,
-  }));
-}
+// Disable static params since we're using dynamic rendering
+// export async function generateStaticParams() {
+//   const items = await prisma.item.findMany({
+//     select: { id: true },
+//   });
+//   return items.map((item) => ({ id: item.id }));
+// }
 
 export default async function ItemDetailPage({
                                                params,

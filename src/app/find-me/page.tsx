@@ -42,17 +42,6 @@ export default function FindMePage() {
           </article>
         ))}
       </section>
-
-      <section className="contact-strip" aria-label="Contact information">
-        <div>
-          <span>Email</span>
-          <a href="mailto:orders@harkonians-emporium.example">orders@harkonians-emporium.example</a>
-        </div>
-        <div>
-          <span>Phone</span>
-          <a href="tel:+15550149277">+1 (555) 014-9277</a>
-        </div>
-      </section>
     </div>
   );
 }

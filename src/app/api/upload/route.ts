@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { getSupabase, ITEMS_BUCKET } from "@/lib/supabase";
+import { requireDM, unauthorizedResponse } from "@/lib/auth/routeProtection";
+
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
+  const user = await requireDM();
+  if (!user) {
+    return unauthorizedResponse("Unauthorized - DM access required");
+  }
+
   const form = await req.formData();
   const file = form.get("file") as unknown as File;
   if (!file) return new Response("No file", { status: 400 });

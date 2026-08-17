@@ -57,17 +57,19 @@ export default function SecretAdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    const logged = isLoggedIn();
-    setLoggedIn(logged);
-    if (!logged) {
-      router.push("/auth");
-    } else {
-      loadItems();
-    }
+    // Check authentication on page load
+    isLoggedIn().then((logged) => {
+      setLoggedIn(logged);
+      if (!logged) {
+        router.push("/auth");
+      } else {
+        loadItems();
+      }
+    });
   }, [router]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setLoggedIn(false);
     router.push("/auth");
   };

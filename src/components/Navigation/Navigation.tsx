@@ -1,4 +1,6 @@
 import Link from "next/link";
+import LoginStatus from "@/components/LoginStatus/LoginStatus";
+import ProfileLink from "@/components/ProfileLink/ProfileLink";
 
 export default function Navigation() {
     return (
@@ -10,6 +12,7 @@ export default function Navigation() {
                 <Link href="/">Home</Link>
                 <Link href="/marketplace">Marketplace</Link>
                 <Link href="/find-me">Find Me</Link>
+                <ProfileLink />
             </div>
         </nav>
     );

@@ -81,10 +81,11 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   });
 
   useEffect(() => {
-    setLoggedIn(isLoggedIn());
+    // Check initial login state
+    isLoggedIn().then(setLoggedIn);
     
     const handleStorageChange = () => {
-      setLoggedIn(isLoggedIn());
+      isLoggedIn().then(setLoggedIn);
     };
     
     window.addEventListener("storage", handleStorageChange);
@@ -254,14 +255,6 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
           <form onSubmit={handleSubmitReview} className="item-detail-review-form">
             <h3>Leave a Review</h3>
             <div className="item-detail-review-inputs">
-              <input
-                type="text"
-                placeholder="Your name"
-                value={authorName}
-                onChange={(e) => handleStoreAuthorName(e.target.value)}
-                required
-                className="item-detail-review-input"
-              />
               <textarea
                 placeholder="Your review..."
                 value={newReview}
