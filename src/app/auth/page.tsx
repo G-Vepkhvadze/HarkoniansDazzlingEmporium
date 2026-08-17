@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { login, isLoggedIn } from "@/lib/auth";
 import Link from "next/link";
 
@@ -9,7 +9,6 @@ function AuthPageContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
 
@@ -17,10 +16,10 @@ function AuthPageContent() {
     // If already logged in, redirect to homepage or returnUrl
     isLoggedIn().then((loggedIn) => {
       if (loggedIn) {
-        router.push(returnUrl || "/");
+        window.location.href = returnUrl || "/";
       }
     });
-  }, [router, returnUrl]);
+  }, [returnUrl]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,8 +29,8 @@ function AuthPageContent() {
     try {
       const success = await login(username, password);
       if (success) {
-        // Redirect to returnUrl or homepage after successful login
-        router.push(returnUrl || "/");
+        // Redirect to returnUrl or homepage after successful login with full reload
+        window.location.href = returnUrl || "/";
       } else {
         setError("Invalid username or password");
       }

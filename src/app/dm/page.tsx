@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
 import { isLoggedIn, isDMClient, getCurrentUserClient, logout } from "@/lib/auth";
 import Link from "next/link";
 
@@ -18,7 +17,6 @@ function DMPageContent() {
   }[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     async function checkAuth() {
@@ -26,7 +24,7 @@ function DMPageContent() {
       setIsAuthenticated(loggedIn);
 
       if (!loggedIn) {
-        router.push("/auth");
+        window.location.href = "/auth";
         return;
       }
 
@@ -34,7 +32,7 @@ function DMPageContent() {
       setIsDm(dm);
 
       if (!dm) {
-        router.push("/");
+        window.location.href = "/";
         return;
       }
 
@@ -58,16 +56,16 @@ function DMPageContent() {
     }
 
     checkAuth();
-  }, [router]);
+  }, []);
 
   async function handleLogout() {
     setIsLoggingOut(true);
     try {
       await logout();
-      router.push("/");
+      window.location.href = "/";
     } catch {
       // Logout failed, but redirect anyway
-      router.push("/");
+      window.location.href = "/";
     }
   }
 

@@ -54,11 +54,11 @@ function calculateSalePrice(price: number, discountPercent: number) {
 export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   const [reviews, setReviews] = useState<Review[]>(item.reviews);
   const [newReview, setNewReview] = useState("");
-  const [authorName, setAuthorName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
+  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
 
   const filter = new Filter({
     placeHolder: "***",
@@ -104,18 +104,13 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authorName.trim() || !newReview.trim()) {
-      setError("Please enter both your name and a review.");
+    if (!newReview.trim()) {
+      setError("Please enter a review.");
       return;
     }
 
-    const filteredName = filter.clean(authorName.trim());
     const filteredContent = filter.clean(newReview.trim());
 
-    if (filteredName !== authorName.trim()) {
-      setError("Name contains inappropriate language.");
-      return;
-    }
     if (filteredContent !== newReview.trim()) {
       setError("Review contains inappropriate language.");
       return;
@@ -128,7 +123,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
       const res = await fetch(`/api/reviews?itemId=${item.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id, authorName: filteredName, content: filteredContent }),
+        body: JSON.stringify({ itemId: item.id, content: filteredContent }),
       });
 
       if (!res.ok) {
@@ -140,7 +135,6 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
       const data = await res.json();
       setReviews([...reviews, data]);
       setNewReview("");
-      setAuthorName("");
       setSuccess("Review submitted successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch {
@@ -179,9 +173,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
     }
   };
 
-  const handleStoreAuthorName = (name: string) => {
-    setAuthorName(name);
-  };
+
 
   return (
     <div className="item-detail-page">
@@ -270,6 +262,96 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
             {error && <p className="item-detail-error">{error}</p>}
             {success && <p className="item-detail-success">{success}</p>}
           </form>
+        </section>
+
+        <section className="item-detail-purchase" style={{
+          marginTop: "2rem",
+          padding: "1.5rem",
+          border: "1px solid rgba(216, 170, 79, 0.24)",
+          borderRadius: "2px",
+          background: "linear-gradient(145deg, rgba(45, 30, 20, 0.92), rgba(22, 15, 10, 0.95))",
+        }}>
+          <h2 style={{
+            color: "var(--gold-soft)",
+            fontSize: "1.3rem",
+            marginBottom: "1rem",
+            fontFamily: "var(--fantasy-font)",
+          }}>
+            Purchase {item.name}
+          </h2>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr auto",
+            gap: "1rem",
+            alignItems: "center",
+            maxWidth: "500px",
+          }}>
+            <label style={{
+              color: "var(--cream)",
+              fontWeight: 700,
+            }}>
+              Quantity:
+            </label>
+            <input
+              type="number"
+              min="1"
+              max={item.stock}
+              value={purchaseQuantity}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 1;
+                setPurchaseQuantity(Math.min(value, item.stock));
+              }}
+              style={{
+                border: "1px solid rgba(216, 170, 79, 0.35)",
+                borderRadius: "2px",
+                background: "#130d09",
+                color: "var(--cream)",
+                padding: "0.5rem",
+                width: "80px",
+              }}
+            />
+            <span style={{
+              color: "var(--muted)",
+              fontSize: "0.85rem",
+            }}>
+              Max: {item.stock}
+            </span>
+          </div>
+          <div style={{
+            marginTop: "1rem",
+            paddingTop: "1rem",
+            borderTop: "1px solid rgba(216, 170, 79, 0.18)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}>
+            <span style={{
+              color: "var(--cream)",
+              fontSize: "1.1rem",
+              fontWeight: 700,
+            }}>
+              Total: {formatGold(displayPrice * purchaseQuantity)}
+            </span>
+            <button
+              style={{
+                border: "1px solid rgba(216, 170, 79, 0.4)",
+                borderRadius: "2px",
+                background: "rgba(216, 170, 79, 0.18)",
+                color: "var(--cream)",
+                padding: "0.55rem 1.25rem",
+                fontSize: "0.95rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "background 140ms ease, border-color 140ms ease",
+              }}
+              onClick={() => {
+                // Placeholder for future purchase logic
+                alert("Purchase functionality coming soon!");
+              }}
+            >
+              Purchase
+            </button>
+          </div>
         </section>
       </div>
     </div>
