@@ -23,7 +23,9 @@
 
 import { prisma } from '../prisma';
 import { hashToken, verifyToken, generateSecureToken } from '../crypto';
-import { UserRole } from '@prisma/client';
+
+// User role type
+type UserRole = "PLAYER" | "DM";
 
 // =============================================
 // TOKEN CONSTANTS

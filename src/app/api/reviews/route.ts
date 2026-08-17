@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionByToken } from "@/lib/auth/session";
 import { SESSION_COOKIE_CONFIG } from "@/lib/auth/index";
-import { UserRole } from "@prisma/client";
 
 export const runtime = 'nodejs';
 
@@ -85,7 +84,7 @@ export async function POST(request: Request) {
     }
 
     // Only PLAYER and DM roles can post reviews
-    if (user.role !== UserRole.PLAYER && user.role !== UserRole.DM) {
+    if (user.role !== "PLAYER" && user.role !== "DM") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

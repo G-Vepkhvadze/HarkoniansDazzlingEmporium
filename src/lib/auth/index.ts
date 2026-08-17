@@ -1,10 +1,12 @@
-import { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { getSessionByToken, createSession, deleteSession, SESSION_COOKIE_MAX_AGE } from "./session";
 import { verifyCredentials, getUserById } from "./user";
 
 // Session cookie name
 const SESSION_COOKIE_NAME = "harkonians_session";
+
+// User role type
+export type UserRole = "PLAYER" | "DM";
 
 /**
  * Authentication result type
@@ -114,7 +116,7 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function isDM(): Promise<boolean> {
   const user = await getCurrentUser();
-  return user?.role === UserRole.DM;
+  return user?.role === "DM";
 }
 
 /**
@@ -123,7 +125,7 @@ export async function isDM(): Promise<boolean> {
  */
 export async function isPlayer(): Promise<boolean> {
   const user = await getCurrentUser();
-  return user?.role === UserRole.PLAYER;
+  return user?.role === "PLAYER";
 }
 
 /**
@@ -146,7 +148,7 @@ export async function requireAuth(): Promise<SessionUser> {
  */
 export async function requireDM(): Promise<SessionUser> {
   const user = await requireAuth();
-  if (user.role !== UserRole.DM) {
+  if (user.role !== "DM") {
     throw new Error("FORBIDDEN");
   }
   return user;

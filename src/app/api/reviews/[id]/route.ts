@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionByToken } from "@/lib/auth/session";
 import { SESSION_COOKIE_CONFIG } from "@/lib/auth/index";
-import { UserRole } from "@prisma/client";
 
 export const runtime = 'nodejs';
 
@@ -65,7 +64,7 @@ export async function DELETE(
     // Check permissions:
     // - DM can delete any review
     // - PLAYER can only delete their own reviews
-    const canDelete = authUser.role === UserRole.DM || review.userId === authUser.id;
+    const canDelete = authUser.role === "DM" || review.userId === authUser.id;
 
     if (!canDelete) {
       return NextResponse.json({ error: "You can only delete your own reviews" }, { status: 403 });

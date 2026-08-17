@@ -6,10 +6,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionByToken } from "./session";
-import { UserRole } from "@prisma/client";
 
 // Session cookie name
 const SESSION_COOKIE_NAME = "harkonians_session";
+
+// User role type
+type UserRole = "PLAYER" | "DM";
 
 /**
  * Check if the current request is authenticated as a DM.
@@ -33,7 +35,7 @@ export async function requireDM(): Promise<{
     return null;
   }
 
-  if (session.user.role !== UserRole.DM) {
+  if (session.user.role !== "DM") {
     return null;
   }
 

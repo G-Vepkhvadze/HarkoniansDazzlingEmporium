@@ -1,6 +1,8 @@
-import { UserRole } from "@prisma/client";
 import { prisma } from "../prisma";
 import { hashPassword, verifyPassword } from "../password";
+
+// User role type
+export type UserRole = "PLAYER" | "DM";
 
 /**
  * Find a user by username.
@@ -49,7 +51,7 @@ export async function getUserById(id: string) {
 export async function createUser(
   username: string,
   password: string,
-  role: UserRole = UserRole.PLAYER
+  role: UserRole = "PLAYER"
 ) {
   const passwordHash = await hashPassword(password);
 
