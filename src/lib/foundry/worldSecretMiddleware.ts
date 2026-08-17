@@ -22,8 +22,10 @@
  */
 
 import { getWorldBySecret } from './worldSecret';
-import { UserRole } from '@prisma/client';
 import { requireCharacterToken, extractTokenFromRequest } from './characterToken';
+
+// User role type
+type UserRole = "PLAYER" | "DM";
 
 // =============================================
 // WORLD SECRET EXTRACTION
@@ -245,7 +247,7 @@ export async function requireDmFoundryAuthorization(
   const auth = await requireFullFoundryAuthorization(request);
   
   // Additionally verify that the authenticated user is the DM for this world
-  if (auth.user.id !== dmUserId || auth.user.role !== UserRole.DM) {
+  if (auth.user.id !== dmUserId || auth.user.role !== "DM") {
     throw new Error('FORBIDDEN: DM authorization required');
   }
   

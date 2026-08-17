@@ -1,4 +1,5 @@
-import { UserRole } from "@prisma/client";
+// User role type
+export type UserRole = "PLAYER" | "DM";
 
 export interface User {
   id: string;

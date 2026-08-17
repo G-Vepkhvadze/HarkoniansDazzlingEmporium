@@ -7,7 +7,9 @@
 
 import { prisma } from "../prisma";
 import { generateSecureToken, hashToken, verifyToken } from "../crypto";
-import { UserRole } from "@prisma/client";
+
+// User role type
+type UserRole = "PLAYER" | "DM";
 
 // =============================================
 // LINK REQUEST CONFIGURATION

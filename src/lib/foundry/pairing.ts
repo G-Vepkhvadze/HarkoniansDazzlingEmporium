@@ -7,7 +7,9 @@
 
 import { prisma } from "../prisma";
 import { generatePairingCode, hashToken, verifyToken } from "../crypto";
-import { UserRole } from "@prisma/client";
+
+// User role type
+type UserRole = "PLAYER" | "DM";
 
 // =============================================
 // PAIRING CODE CONFIGURATION
@@ -48,7 +50,7 @@ export async function generatePairingRequest(
     select: { role: true },
   });
 
-  if (!user || user.role !== UserRole.DM) {
+  if (!user || user.role !== "DM") {
     throw new Error("Only DM users can create pairing codes");
   }
 
