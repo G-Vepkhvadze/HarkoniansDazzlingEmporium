@@ -37,7 +37,9 @@ export type AuditAction =
   | "AUTH_CODE_USED"
   | "AUTH_CODE_EXPIRED"
   | "CHARACTER_ACCESS"
-  | "CHARACTER_UPDATE";
+  | "CHARACTER_UPDATE"
+  | "FOUNDRY_ITEM_PUBLISH"
+  | "FOUNDRY_ITEM_UPDATE";
 
 /**
  * Target types for audit logging.

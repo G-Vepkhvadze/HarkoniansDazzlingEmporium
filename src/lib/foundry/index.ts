@@ -93,6 +93,25 @@ export {
   getCharactersForUser,
 } from './linking';
 
+// Item publishing utilities
+export {
+  MAX_FOUNDRY_ITEM_DATA_SIZE,
+  validatePublishRequest,
+  sanitizeFoundryItemData,
+  mapRarity,
+  mapType,
+  publishFoundryItem,
+  updateFoundryItem,
+  itemExists,
+  getItemById,
+} from './items';
+
+export type {
+  PublishFoundryItemRequest,
+  PublishFoundryItemResult,
+  FoundryItemResponse,
+} from './items';
+
 export type { FoundryAuthorization } from './worldSecretMiddleware';
 
 // Note: extractWorldSecretFromRequest is re-exported from worldSecretMiddleware
