@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
+import { broadcastGoldUpdate, getWebSocketServer } from "@/lib/websocket";
 
 export const runtime = 'nodejs';
 
@@ -245,6 +246,11 @@ export async function POST(request: Request) {
       character.id,
       context
     );
+
+    // Broadcast gold update to connected Foundry clients
+    if (getWebSocketServer()) {
+      broadcastGoldUpdate(world.foundryWorldId, foundryActorId, character.creditBalance);
+    }
 
     const response = NextResponse.json({
       success: true,

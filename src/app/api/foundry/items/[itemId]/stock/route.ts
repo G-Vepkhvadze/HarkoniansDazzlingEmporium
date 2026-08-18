@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
+import { broadcastStockUpdate, getWebSocketServer } from "@/lib/websocket";
+import { getHarkoniansMetadataString } from "@/lib/foundry/items";
 
 export const runtime = 'nodejs';
 
@@ -85,10 +87,7 @@ export async function PUT(
     }
 
     // Verify this item belongs to this world
-    // TypeScript: foundryItemData is Prisma.Json type, need to cast to object
-    const foundryItemData = item.foundryItemData as Record<string, unknown> | null;
-    const metadata = foundryItemData?._harkoniansMetadata as Record<string, unknown> | null;
-    const foundryWorldId = metadata?.foundryWorldId as string | undefined;
+    const foundryWorldId = getHarkoniansMetadataString(item.foundryItemData, 'foundryWorldId');
     
     if (foundryWorldId && foundryWorldId !== world.foundryWorldId) {
       const response = NextResponse.json(
@@ -152,6 +151,11 @@ export async function PUT(
       item.id,
       context
     );
+
+    // Broadcast stock update to connected Foundry clients
+    if (getWebSocketServer()) {
+      broadcastStockUpdate(world.foundryWorldId, itemId, updatedItem.stock);
+    }
 
     const response = NextResponse.json({
       success: true,

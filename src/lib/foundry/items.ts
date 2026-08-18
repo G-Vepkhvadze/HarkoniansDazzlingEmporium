@@ -404,7 +404,7 @@ export async function updateFoundryItem(
   const sanitizedData = sanitizeFoundryItemData(request.foundryItemData);
 
   // Preserve existing Harkonians metadata and update with new data
-  const existingMetadata = (existingItem.foundryItemData as Record<string, unknown>)?._harkoniansMetadata as Record<string, unknown> || {};
+  const existingMetadata = getHarkoniansMetadata(existingItem.foundryItemData) || {};
   const enrichedData = {
     ...sanitizedData,
     _harkoniansMetadata: {
@@ -510,3 +510,51 @@ export async function getItemById(itemId: string) {
 
 // Maximum payload size constant
 export { MAX_FOUNDRY_ITEM_DATA_SIZE };
+
+// =============================================
+// TYPE GUARDS FOR FOUNDRY ITEM DATA
+// =============================================
+
+/**
+ * Type guard to check if a value is a Record (object with string keys).
+ * Used to safely access _harkoniansMetadata from Prisma Json fields.
+ */
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Safely get _harkoniansMetadata from foundryItemData.
+ * Returns null if foundryItemData is not an object or doesn't have _harkoniansMetadata.
+ */
+export function getHarkoniansMetadata(
+  foundryItemData: unknown
+): Record<string, unknown> | null {
+  if (!isRecord(foundryItemData)) {
+    return null;
+  }
+  const metadata = foundryItemData._harkoniansMetadata;
+  if (!isRecord(metadata)) {
+    return null;
+  }
+  return metadata;
+}
+
+/**
+ * Safely get a string value from _harkoniansMetadata.
+ * Returns undefined if not found or not a string.
+ */
+export function getHarkoniansMetadataString(
+  foundryItemData: unknown,
+  key: string
+): string | undefined {
+  const metadata = getHarkoniansMetadata(foundryItemData);
+  if (!metadata) {
+    return undefined;
+  }
+  const value = metadata[key];
+  if (typeof value === 'string') {
+    return value;
+  }
+  return undefined;
+}

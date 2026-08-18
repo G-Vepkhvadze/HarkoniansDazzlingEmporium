@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
+import { broadcastPurchaseCompletion, getWebSocketServer } from "@/lib/websocket";
 
 export const runtime = 'nodejs';
 
@@ -216,28 +217,24 @@ export async function POST(request: Request) {
         context
       );
 
-      // Send WebSocket notification to Foundry if connected
-      // This will trigger the item to be created in Foundry
-      const wsMessage = {
-        type: 'purchase_complete',
-        purchaseId,
-        foundryActorId: purchase.character.foundryActorId,
-        foundryItemId,
-        item: purchase.item ? {
-          id: purchase.item.id,
-          name: purchase.item.name,
-          type: purchase.item.type,
-          description: purchase.item.description,
-          rarity: purchase.item.rarity,
-          img: purchase.item.image,
-          price: purchase.item.price,
-          foundryItemData: purchase.item.foundryItemData
-        } : null
-      };
-
-      // In a real implementation, you would broadcast this to connected Foundry clients
-      // For now, we just log it
-      console.log('Harkonians | Purchase complete, notification ready:', wsMessage);
+      // Broadcast purchase completion to connected Foundry clients
+      if (getWebSocketServer()) {
+        broadcastPurchaseCompletion({
+          id: purchaseId,
+          characterId: purchase.characterId,
+          foundryWorldId: purchase.character.foundryWorldId,
+          foundryActorId: purchase.character.foundryActorId,
+          itemId: purchase.itemId,
+          itemName: purchase.itemName,
+          itemType: purchase.item?.type || 'item',
+          itemDescription: purchase.item?.description || '',
+          itemRarity: purchase.item?.rarity || 'common',
+          itemPrice: purchase.item?.price || 0,
+          itemImage: purchase.item?.image || '',
+          foundryItemData: purchase.item?.foundryItemData,
+          stock: purchase.item?.stock || 0
+        });
+      }
 
       const response = NextResponse.json({
         success: true,

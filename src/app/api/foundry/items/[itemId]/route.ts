@@ -6,6 +6,7 @@ import {
   updateFoundryItem,
   itemExists,
   MAX_FOUNDRY_ITEM_DATA_SIZE,
+  getHarkoniansMetadataString,
 } from "@/lib/foundry/items";
 
 /**
@@ -259,8 +260,8 @@ export async function PUT(request: Request, context: { params: Promise<{ itemId:
     });
 
     if (existingItem && existingItem.foundryItemData) {
-      const metadata = (existingItem.foundryItemData as Record<string, unknown>)?._harkoniansMetadata as Record<string, unknown> || {};
-      if ((metadata.harkoniansWorldId as string) !== world.id) {
+      const harkoniansWorldId = getHarkoniansMetadataString(existingItem.foundryItemData, 'harkoniansWorldId');
+      if (harkoniansWorldId && harkoniansWorldId !== world.id) {
         const response = NextResponse.json(
           { error: "Item does not belong to this world" },
           { status: 403 }

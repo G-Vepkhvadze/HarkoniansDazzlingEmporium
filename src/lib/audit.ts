@@ -44,7 +44,6 @@ export type AuditAction =
   | "FOUNDRY_ITEM_UPDATE"
   | "FOUNDRY_ITEM_CREATE"
   | "FOUNDRY_USER_LINK"
-  | "GOLD_SYNC"
   | "GOLD_UPDATE"
   | "ITEM_STOCK_UPDATE";
 
