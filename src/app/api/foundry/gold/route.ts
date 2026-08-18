@@ -220,8 +220,14 @@ export async function POST(request: Request) {
       data: { creditBalance: Math.max(0, gold) },
       select: {
         id: true,
+        name: true,
         creditBalance: true,
-        name: true
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+        foundryWorldId: true,
+        foundryActorId: true,
+        katastroWorldId: true
       }
     });
 
