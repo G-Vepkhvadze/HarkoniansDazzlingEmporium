@@ -133,6 +133,13 @@ model Purchase {
   priceCp     Int
   createdAt   DateTime @default(now())
 
+  // Purchase status for Foundry integration
+  status       String    @default("PENDING")
+  failureReason String?
+
+  // Foundry item ID created from this purchase
+  foundryItemId String?
+
   // Idempotency key for preventing duplicate purchase processing
   // Unique across all purchases - prevents same request from being processed twice
   idempotencyKey String?

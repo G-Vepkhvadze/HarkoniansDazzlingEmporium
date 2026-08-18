@@ -85,7 +85,11 @@ export async function PUT(
     }
 
     // Verify this item belongs to this world
-    const foundryWorldId = item.foundryItemData?._harkoniansMetadata?.foundryWorldId;
+    // TypeScript: foundryItemData is Prisma.Json type, need to cast to object
+    const foundryItemData = item.foundryItemData as Record<string, unknown> | null;
+    const metadata = foundryItemData?._harkoniansMetadata as Record<string, unknown> | null;
+    const foundryWorldId = metadata?.foundryWorldId as string | undefined;
+    
     if (foundryWorldId && foundryWorldId !== world.foundryWorldId) {
       const response = NextResponse.json(
         { error: "Item does not belong to this world" },

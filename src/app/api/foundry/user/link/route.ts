@@ -4,6 +4,7 @@ import { getSessionByToken } from "@/lib/auth/session";
 import { SESSION_COOKIE_CONFIG } from "@/lib/auth/index";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
+import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
 
@@ -131,7 +132,7 @@ export async function POST(request: Request) {
     // Generate a new character API token for Foundry module
     // This token will be used for subsequent authenticated requests
     const apiToken = crypto.randomUUID();
-    const apiTokenHash = await Bun.password.hash(apiToken);
+    const apiTokenHash = await bcrypt.hash(apiToken, 10);
 
     // Store the API token
     await prisma.characterApiToken.create({

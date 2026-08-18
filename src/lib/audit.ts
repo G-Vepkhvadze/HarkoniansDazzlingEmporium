@@ -32,6 +32,8 @@ export type AuditAction =
   | "DM_IMPERSONATION_START"
   | "DM_IMPERSONATION_END"
   | "PURCHASE"
+  | "PURCHASE_COMPLETED"
+  | "PURCHASE_FAILED"
   | "CREDIT_ADJUSTMENT"
   | "AUTH_CODE_CREATED"
   | "AUTH_CODE_USED"
@@ -39,7 +41,12 @@ export type AuditAction =
   | "CHARACTER_ACCESS"
   | "CHARACTER_UPDATE"
   | "FOUNDRY_ITEM_PUBLISH"
-  | "FOUNDRY_ITEM_UPDATE";
+  | "FOUNDRY_ITEM_UPDATE"
+  | "FOUNDRY_ITEM_CREATE"
+  | "FOUNDRY_USER_LINK"
+  | "GOLD_SYNC"
+  | "GOLD_UPDATE"
+  | "ITEM_STOCK_UPDATE";
 
 /**
  * Target types for audit logging.

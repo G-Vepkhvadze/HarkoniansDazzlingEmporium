@@ -240,7 +240,7 @@ export async function POST(request: Request) {
     });
     await createAuditLog(
       world.dmUserId,
-      "GOLD_SYNC",
+      "CREDIT_ADJUSTMENT",
       "Character",
       character.id,
       context

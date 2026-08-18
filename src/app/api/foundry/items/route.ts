@@ -290,13 +290,13 @@ export async function POST(request: Request) {
     const context = createAuditContextFromRequest(request, {
       foundryWorldId: foundry.worldId,
       foundryItemId: foundry.itemId,
-      foundryItemUuid: foundry.itemUuid,
+      foundryItemUuid: foundry.itemUuid || null,
       itemId: newItem.id,
       itemName: newItem.name
     });
     await createAuditLog(
       world.dmUserId,
-      "ITEM_CREATE",
+      "FOUNDRY_ITEM_CREATE",
       "Item",
       newItem.id,
       context
@@ -304,10 +304,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({
       success: true,
-      item: {
-        id: newItem.id,
-        ...newItem
-      },
+      item: newItem,
       message: "Item created successfully"
     }, { status: 201 });
 
