@@ -4,7 +4,8 @@
  * This module provides real-time communication between Harkonians and Foundry VTT.
  */
 
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
+import { IncomingMessage } from 'http';
 import { prisma } from '../prisma';
 import { getWorldBySecret } from '../foundry/worldSecret';
 import { createAuditLog, createAuditContextFromRequest } from '../audit';
@@ -46,7 +47,7 @@ export function initializeWebSocketServer(port: number = 3001): WebSocketServer 
 /**
  * Handle a new WebSocket connection.
  */
-function handleConnection(ws: WebSocket, req: any) {
+function handleConnection(ws: WebSocket, req: IncomingMessage) {
     const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
     const token = url.searchParams.get('token');
     
