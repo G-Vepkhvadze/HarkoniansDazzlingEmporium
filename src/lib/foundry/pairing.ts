@@ -213,76 +213,88 @@ export async function cleanupExpiredPairingCodes(
  * @returns Promise resolving to { success: boolean, world: { id: string; foundryWorldId: string }, worldSecret?: string, error?: string }
  */
 export async function completeWorldPairing(
-  pairingCode: string,
-  foundryWorldId: string
+    pairingCode: string,
+    foundryWorldId: string
 ): Promise<{
   success: boolean;
-  world: { id: string; foundryWorldId: string };
+  world?: {
+    id: string;
+    foundryWorldId: string;
+  };
   worldSecret?: string;
   error?: string;
 }> {
-  // Validate the pairing code
+  if (!pairingCode?.trim()) {
+    return {
+      success: false,
+      error: "Pairing code is required."
+    };
+  }
+
+  if (!foundryWorldId?.trim()) {
+    return {
+      success: false,
+      error: "Foundry world ID is required."
+    };
+  }
+
   const pairingData = await validatePairingCode(pairingCode);
 
   if (!pairingData) {
     return {
       success: false,
-      world: { id: "", foundryWorldId: "" },
-      error: "Invalid, expired, or already used pairing code",
+      error: "Invalid, expired, or already used pairing code."
     };
   }
 
-  // Mark the code as used
-  await markPairingCodeAsUsed(pairingCode);
+  const { raw: worldSecret, hash: worldSecretHash } =
+      await (await import("../crypto")).generateWorldSecret();
 
-  // Create or update the KatastroWorld
-  let world: { id: string; foundryWorldId: string };
+  let world;
 
   if (pairingData.katastroWorldId) {
-    // Update existing world with new Foundry ID
     world = await prisma.katastroWorld.update({
-      where: { id: pairingData.katastroWorldId },
+      where: {
+        id: pairingData.katastroWorldId
+      },
       data: {
         foundryWorldId,
         dmUserId: pairingData.userId,
+        worldSecretHash
       },
       select: {
         id: true,
-        foundryWorldId: true,
-      },
+        foundryWorldId: true
+      }
     });
-
-    return {
-      success: true,
-      world,
-    };
   } else {
-    // Generate a new world secret
-    const { raw: rawSecret, hash: secretHash } = await (
-      await import("../crypto")
-    ).generateWorldSecret();
-
-    // Create a new KatastroWorld
     world = await prisma.katastroWorld.create({
       data: {
-        worldSecretHash: secretHash,
+        worldSecretHash,
         foundryWorldId,
-        dmUserId: pairingData.userId,
+        dmUserId: pairingData.userId
       },
       select: {
         id: true,
-        foundryWorldId: true,
-      },
+        foundryWorldId: true
+      }
     });
-
-    // Return the raw secret for the Foundry module to store
-    // Note: This is returned to the caller - must be handled securely
-    return {
-      success: true,
-      world,
-      worldSecret: rawSecret,
-    };
   }
+
+  await prisma.foundryPairingCode.update({
+    where: {
+      id: pairingData.id
+    },
+    data: {
+      used: true
+    }
+  });
+
+  return {
+    success: true,
+    world,
+    worldSecret
+  };
 }
 
 /**
