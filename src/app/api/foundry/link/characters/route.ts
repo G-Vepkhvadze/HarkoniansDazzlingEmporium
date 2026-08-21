@@ -14,7 +14,19 @@ import {
     validateLinkRequest
 } from "@/lib/foundry/linking";
 
+import {
+    addFoundryCorsHeaders,
+    foundryOptions
+} from "@/lib/foundry/cors";
+
 export const runtime = "nodejs";
+
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS(
+    request: Request
+) {
+    return foundryOptions(request);
+}
 
 export async function GET(
     request: Request
@@ -28,13 +40,15 @@ export async function GET(
         );
 
     if (!requestId) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "requestId is required."
             },
             { status: 400 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     const cookieStore =
@@ -53,13 +67,15 @@ export async function GET(
             : null;
 
     if (!session) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "Authentication required."
             },
             { status: 401 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     const linkRequest =
@@ -68,13 +84,15 @@ export async function GET(
         );
 
     if (!linkRequest) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "Invalid or expired link request."
             },
             { status: 400 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     const characters =
@@ -114,7 +132,8 @@ export async function GET(
             }
         });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
         characters
     });
-}
+    addFoundryCorsHeaders(response, request);
+    return response;

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
-import { broadcastPurchaseCompletion, getWebSocketServer } from "@/lib/websocket";
+import { broadcastToCharacter } from "@/lib/foundry/realtime";
 
 export const runtime = 'nodejs';
 
@@ -103,39 +103,91 @@ export async function POST(request: Request) {
     // Handle failed purchase
     if (status === 'failed') {
       const purchase = await prisma.purchase.findUnique({
-        where: { id: purchaseId }
+        where: { id: purchaseId },
+        include: {
+          character: {
+            select: {
+              id: true,
+              foundryWorldId: true,
+              foundryActorId: true,
+              creditBalance: true
+            }
+          },
+          item: true
+        }
       });
 
-      if (purchase) {
-        // Update purchase status
-        // Note: status and failureReason fields need to be added to Purchase model in schema.prisma
-        await prisma.purchase.update({
+      if (!purchase) {
+        const response = NextResponse.json(
+          { error: "Purchase not found" },
+          { status: 404 }
+        );
+        addCorsHeaders(response, request);
+        return response;
+      }
+
+      // Verify purchase is PENDING
+      if (purchase.status !== "PENDING") {
+        const response = NextResponse.json(
+          { error: "Only PENDING purchases can be failed" },
+          { status: 409 }
+        );
+        addCorsHeaders(response, request);
+        return response;
+      }
+
+      // Verify this purchase belongs to this world
+      if (purchase.character.foundryWorldId !== world.foundryWorldId) {
+        const response = NextResponse.json(
+          { error: "Purchase does not belong to this world" },
+          { status: 403 }
+        );
+        addCorsHeaders(response, request);
+        return response;
+      }
+
+      // Atomic refund and stock restoration
+      await prisma.$transaction(async (tx) => {
+        // Refund the character
+        await tx.character.update({
+          where: { id: purchase.characterId },
+          data: { creditBalance: { increment: purchase.priceCp } }
+        });
+
+        // Restore stock if item exists and stock is finite
+        if (purchase.item && purchase.item.stock !== -1) {
+          await tx.item.update({
+            where: { id: purchase.item.id },
+            data: { stock: { increment: purchase.quantity } }
+          });
+        }
+
+        // Mark purchase as FAILED
+        await tx.purchase.update({
           where: { id: purchaseId },
           data: {
-            // @ts-ignore - these fields exist in schema but types may not be regenerated yet
-            status: 'FAILED',
-            // @ts-ignore
+            status: "FAILED",
             failureReason: error || null
           }
         });
+      });
 
-        const context = createAuditContextFromRequest(request, {
-          purchaseId,
-          status: 'failed',
-          error: error || null
-        });
-        await createAuditLog(
-          world.dmUserId,
-          "PURCHASE_FAILED",
-          "Purchase",
-          purchaseId,
-          context
-        );
-      }
+      const context = createAuditContextFromRequest(request, {
+        purchaseId,
+        status: 'failed',
+        error: error || null
+      });
+      await createAuditLog(
+        world.dmUserId,
+        "PURCHASE_FAILED",
+        "Purchase",
+        purchaseId,
+        context
+      );
 
       const response = NextResponse.json({
         success: true,
-        message: "Purchase failure recorded"
+        message: "Purchase failed, refunded, and stock restored"
       });
       addCorsHeaders(response, request);
       return response;
@@ -179,26 +231,16 @@ export async function POST(request: Request) {
       }
 
       // Update purchase status and store Foundry item ID
-      // Note: status and foundryItemId fields need to be added to Purchase model in schema.prisma
       await prisma.purchase.update({
         where: { id: purchaseId },
         data: {
-          // @ts-ignore - these fields exist in schema but types may not be regenerated yet
           status: 'COMPLETED',
-          // @ts-ignore
           foundryItemId: foundryItemId
         }
       });
 
-      // If the purchase had an associated item, decrement its stock
-      if (purchase.item) {
-        await prisma.item.update({
-          where: { id: purchase.item.id },
-          data: {
-            stock: { decrement: 1 }
-          }
-        });
-      }
+      // Note: Stock was already decremented atomically when the purchase was created
+      // via the website. We do NOT decrement again here to avoid race conditions.
 
       // Log the completed purchase
       const context = createAuditContextFromRequest(request, {
@@ -217,22 +259,49 @@ export async function POST(request: Request) {
         context
       );
 
-      // Broadcast purchase completion to connected Foundry clients
-      if (getWebSocketServer()) {
-        broadcastPurchaseCompletion({
-          id: purchaseId,
+      // Broadcast purchase completion to Foundry via Supabase Realtime
+      await broadcastToCharacter(purchase.characterId, {
+        event: "purchase",
+        payload: {
+          purchaseId: purchase.id,
+          actorId: purchase.character.foundryActorId!,
+          quantity: purchase.quantity,
+          item: {
+            id: purchase.itemId!,
+            name: purchase.itemName,
+            type: purchase.item?.type || 'item',
+            description: purchase.item?.description || '',
+            rarity: purchase.item?.rarity || 'COMMON',
+            image: purchase.item?.image || '',
+            foundryItemData: purchase.item?.foundryItemData || {}
+          }
+        }
+      });
+
+      // Broadcast gold update
+      await broadcastToCharacter(purchase.characterId, {
+        event: "gold_update",
+        payload: {
+          actorId: purchase.character.foundryActorId!,
           characterId: purchase.characterId,
-          foundryWorldId: purchase.character.foundryWorldId,
-          foundryActorId: purchase.character.foundryActorId!,
-          itemId: purchase.itemId!,
-          itemName: purchase.itemName,
-          itemType: purchase.item?.type || 'item',
-          itemDescription: purchase.item?.description || '',
-          itemRarity: purchase.item?.rarity || 'common',
-          itemPrice: purchase.item?.price || 0,
-          itemImage: purchase.item?.image || '',
-          foundryItemData: purchase.item?.foundryItemData,
-          stock: purchase.item?.stock || 0
+          gold: purchase.character.creditBalance
+        }
+      });
+
+      // Broadcast stock update with the current stock value
+      if (purchase.item) {
+        // Get current stock value (may have been updated by other purchases)
+        const currentItem = await prisma.item.findUnique({
+          where: { id: purchase.item.id },
+          select: { stock: true }
+        });
+        
+        await broadcastToCharacter(purchase.characterId, {
+          event: "stock_update",
+          payload: {
+            itemId: purchase.item.id,
+            stock: currentItem?.stock || 0
+          }
         });
       }
 

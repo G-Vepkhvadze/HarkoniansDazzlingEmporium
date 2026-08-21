@@ -1,89 +1,100 @@
-import {validatePairingCode} from "@/lib/foundry";
+import { NextResponse } from "next/server";
+import { completeWorldPairing } from "@/lib/foundry/pairing";
+import { addFoundryCorsHeaders, foundryOptions } from "@/lib/foundry/cors";
 
-export async function completeWorldPairing(
-    pairingCode: string,
-    foundryWorldId: string
-): Promise<{
-  success: boolean;
-  world?: {
-    id: string;
-    foundryWorldId: string;
-  };
-  worldSecret?: string;
-  error?: string;
-}> {
-  if (!pairingCode?.trim()) {
-    return {
-      success: false,
-      error: "Pairing code is required."
-    };
-  }
+export const runtime = 'nodejs';
 
-  if (!foundryWorldId?.trim()) {
-    return {
-      success: false,
-      error: "Foundry world ID is required."
-    };
-  }
+/**
+ * Handle OPTIONS for CORS preflight
+ */
+export async function OPTIONS(request: Request) {
+  return foundryOptions(request);
+}
 
-  const pairingData = await validatePairingCode(pairingCode);
-
-  if (!pairingData) {
-    return {
-      success: false,
-      error: "Invalid, expired, or already used pairing code."
-    };
-  }
-
-  const { raw: worldSecret, hash: worldSecretHash } =
-      await (await import("../crypto")).generateWorldSecret();
-
-  let world;
-
-  if (pairingData.katastroWorldId) {
-    world = await prisma.katastroWorld.update({
-      where: {
-        id: pairingData.katastroWorldId
-      },
-      data: {
-        foundryWorldId,
-        dmUserId: pairingData.userId,
-        worldSecretHash
-      },
-      select: {
-        id: true,
-        foundryWorldId: true
+/**
+ * POST /api/foundry/pair/confirm
+ * 
+ * Confirm world pairing by exchanging a pairing code for a world secret.
+ * 
+ * This endpoint is called by the Foundry module after the DM enters the pairing code.
+ * 
+ * Request body:
+ * {
+ *   "pairingCode": "...",
+ *   "foundryWorldId": "..."
+ * }
+ * 
+ * Returns:
+ * - 200 OK with world data and worldSecret on success
+ * - 400 Bad Request if pairing code or world ID is missing
+ * - 400 Bad Request if pairing code is invalid/expired/used
+ * - 500 Internal Server Error on unexpected errors
+ */
+export async function POST(request: Request) {
+  try {
+    // Parse request body
+    let body: { pairingCode?: string; foundryWorldId?: string };
+    
+    try {
+      const bodyText = await request.text();
+      if (bodyText) {
+        body = JSON.parse(bodyText);
+      } else {
+        body = {};
       }
-    });
-  } else {
-    world = await prisma.katastroWorld.create({
-      data: {
-        worldSecretHash,
-        foundryWorldId,
-        dmUserId: pairingData.userId
-      },
-      select: {
-        id: true,
-        foundryWorldId: true
-      }
-    });
-  }
-
-  /*
-   * Consume the pairing code only after the world update succeeds.
-   */
-  await prisma.foundryPairingCode.update({
-    where: {
-      id: pairingData.id
-    },
-    data: {
-      used: true
+    } catch {
+      body = {};
     }
-  });
-
-  return {
-    success: true,
-    world,
-    worldSecret
-  };
+    
+    const pairingCode = body?.pairingCode?.trim();
+    const foundryWorldId = body?.foundryWorldId?.trim();
+    
+    if (!pairingCode) {
+      const response = NextResponse.json(
+        { error: "pairingCode is required" },
+        { status: 400 }
+      );
+      addFoundryCorsHeaders(response, request);
+      return response;
+    }
+    
+    if (!foundryWorldId) {
+      const response = NextResponse.json(
+        { error: "foundryWorldId is required" },
+        { status: 400 }
+      );
+      addFoundryCorsHeaders(response, request);
+      return response;
+    }
+    
+    // Complete the world pairing
+    const result = await completeWorldPairing(pairingCode, foundryWorldId);
+    
+    if (!result.success) {
+      const response = NextResponse.json(
+        { error: result.error || "Pairing failed" },
+        { status: 400 }
+      );
+      addFoundryCorsHeaders(response, request);
+      return response;
+    }
+    
+    // Return success with world data and the one-time world secret
+    const response = NextResponse.json({
+      success: true,
+      world: result.world,
+      worldSecret: result.worldSecret
+    });
+    addFoundryCorsHeaders(response, request);
+    return response;
+    
+  } catch (error) {
+    console.error("Pair confirm error:", error);
+    const response = NextResponse.json(
+      { error: (error as Error).message || "An error occurred during pairing" },
+      { status: 500 }
+    );
+    addFoundryCorsHeaders(response, request);
+    return response;
+  }
 }

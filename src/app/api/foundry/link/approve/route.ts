@@ -14,7 +14,19 @@ import {
     validateLinkRequest
 } from "@/lib/foundry/linking";
 
+import {
+    addFoundryCorsHeaders,
+    foundryOptions
+} from "@/lib/foundry/cors";
+
 export const runtime = "nodejs";
+
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS(
+    request: Request
+) {
+    return foundryOptions(request);
+}
 
 export async function POST(
     request: Request
@@ -36,13 +48,15 @@ export async function POST(
         !requestId ||
         !characterId
     ) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "requestId and characterId are required."
             },
             { status: 400 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     const cookieStore =
@@ -61,13 +75,15 @@ export async function POST(
             : null;
 
     if (!session) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "Authentication required."
             },
             { status: 401 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     const linkRequest =
@@ -76,13 +92,15 @@ export async function POST(
         );
 
     if (!linkRequest) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "Invalid or expired link request."
             },
             { status: 400 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     const character =
@@ -96,13 +114,15 @@ export async function POST(
         });
 
     if (!character) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "Character is not available for this link."
             },
             { status: 403 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     /*
@@ -114,13 +134,15 @@ export async function POST(
         character.foundryActorId !==
         linkRequest.foundryActorId
     ) {
-        return NextResponse.json(
+        const response = NextResponse.json(
             {
                 error:
                     "This character is already linked to another Foundry Actor."
             },
             { status: 409 }
         );
+        addFoundryCorsHeaders(response, request);
+        return response;
     }
 
     await prisma.character.update({
@@ -154,7 +176,9 @@ export async function POST(
         }
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
         success: true
     });
+    addFoundryCorsHeaders(response, request);
+    return response;
 }
