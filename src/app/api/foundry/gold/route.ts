@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
-import { broadcastGoldUpdate, getWebSocketServer } from "@/lib/websocket";
+import { broadcastToCharacter } from "@/lib/foundry/realtime";
 
 export const runtime = 'nodejs';
 
@@ -247,9 +247,26 @@ export async function POST(request: Request) {
       context
     );
 
-    // Broadcast gold update to connected Foundry clients
-    if (getWebSocketServer()) {
-      broadcastGoldUpdate(world.foundryWorldId, foundryActorId, character.creditBalance);
+    // Broadcast gold update to Foundry via Supabase Realtime
+    // Find the character to get their ID for the private channel
+    const charForBroadcast = await prisma.character.findFirst({
+      where: {
+        foundryWorldId: foundryWorldId,
+        foundryActorId: foundryActorId,
+        katastroWorldId: world.id
+      },
+      select: { id: true }
+    });
+    
+    if (charForBroadcast) {
+      await broadcastToCharacter(charForBroadcast.id, {
+        event: "gold_update",
+        payload: {
+          actorId: foundryActorId,
+          characterId: charForBroadcast.id,
+          gold: character.creditBalance
+        }
+      });
     }
 
     const response = NextResponse.json({

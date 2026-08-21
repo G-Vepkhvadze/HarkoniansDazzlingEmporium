@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
-    getCharacterByApiToken
+    validateCharacterToken
 } from "@/lib/foundry/characterToken";
 
 import {
@@ -120,10 +120,29 @@ export async function GET(
             return response;
         }
 
-        const character =
-            await getCharacterByApiToken(
-                characterToken
+        const tokenData = await validateCharacterToken(characterToken);
+        
+        if (!tokenData) {
+            const response =
+                NextResponse.json(
+                    {
+                        error:
+                            "Invalid or expired character token."
+                    },
+                    {
+                        status: 401
+                    }
+                );
+
+            addFoundryCorsHeaders(
+                response,
+                request
             );
+
+            return response;
+        }
+
+        const character = tokenData.character;
 
         if (!character) {
             const response =

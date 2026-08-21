@@ -155,7 +155,7 @@ export async function POST(request: Request) {
     }
     
     // Calculate total price in copper
-    const totalPriceCp = item.priceCp * quantity;
+    const totalPriceCp = item.price * quantity;
     
     // Validate stock
     const currentStock = item.stock;
