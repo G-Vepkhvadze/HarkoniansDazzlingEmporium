@@ -133,6 +133,26 @@ const ALLOWED_ORIGINS = [
 ];
 
 /**
+ * Check if an origin is allowed.
+ * Allows exact matches from ALLOWED_ORIGINS, or any subdomain of forge-vtt.com.
+ */
+function isOriginAllowed(origin: string | null): boolean {
+    if (!origin) return false;
+    
+    // Check exact matches
+    if (ALLOWED_ORIGINS.includes(origin)) {
+        return true;
+    }
+    
+    // Allow any subdomain of forge-vtt.com
+    if (origin.endsWith(".forge-vtt.com") || origin === "https://forge-vtt.com") {
+        return true;
+    }
+    
+    return false;
+}
+
+/**
  * Helper to add CORS headers to a response.
  */
 function addCorsHeaders(response: NextResponse, request: Request): void {
@@ -141,7 +161,7 @@ function addCorsHeaders(response: NextResponse, request: Request): void {
   // If origin is present and allowed, echo it back.
   // Otherwise, use the first allowed origin as default.
   // Never use "*" when credentials are allowed.
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+  const allowedOrigin = isOriginAllowed(origin)
       ? origin
       : ALLOWED_ORIGINS[0];
   
