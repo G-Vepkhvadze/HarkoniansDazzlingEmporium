@@ -168,8 +168,11 @@ export async function POST(
         },
 
         data: {
-            authorizedCharacterId:
-            character.id,
+            authorizedCharacter: {
+                connect: {
+                    id: character.id
+                }
+            },
 
             authorizedAt:
                 new Date()
