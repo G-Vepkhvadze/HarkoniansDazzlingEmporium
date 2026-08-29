@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { Prisma } from "@prisma/client";
 
 import {
     SESSION_COOKIE_CONFIG,
@@ -168,15 +169,9 @@ export async function POST(
         },
 
         data: {
-            authorizedCharacter: {
-                connect: {
-                    id: character.id
-                }
-            },
-
-            authorizedAt:
-                new Date()
-        }
+            authorizedCharacterId: character.id,
+            authorizedAt: new Date()
+        } as Prisma.FoundryLinkRequestUncheckedUpdateInput
     });
 
     const response = NextResponse.json({
