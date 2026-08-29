@@ -189,6 +189,9 @@ export async function POST(
             await prisma.foundryLinkRequest.findUnique({
                 where: {
                     id: linkRequest.id
+                },
+                select: {
+                    authorizedCharacterId: true
                 }
             });
 
