@@ -36,7 +36,7 @@ export function addFoundryCorsHeaders(
     // If origin is present and allowed, echo it back.
     // Otherwise, use the first allowed origin as default.
     // Never use "*" when credentials are allowed.
-    const allowedOrigin = isOriginAllowed(origin)
+    const allowedOrigin = origin && isOriginAllowed(origin)
         ? origin
         : ALLOWED_ORIGINS[0];
 
