@@ -12,8 +12,6 @@ async function main() {
 
   if (!process.env.INITIAL_DM_PASSWORD) {
     console.warn(
-      "WARNING: INITIAL_DM_PASSWORD not set. Using default password. " +
-      "This is insecure for production. Set INITIAL_DM_USERNAME and INITIAL_DM_PASSWORD in .env"
     );
   }
 
