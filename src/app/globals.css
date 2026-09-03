@@ -561,20 +561,6 @@ h3 {
   gap: 1rem;
 }
 
-.help-link {
-  position: absolute;
-  left: 97%;
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  color: var(--gold-soft);
-  font-weight: 800;
-  text-decoration: none;
-  cursor: pointer;
-}
-
 @media (max-width: 800px) {
   .site-nav {
     align-items: center;
@@ -1215,4 +1201,282 @@ h3 {
 
 .auth-input-box {
   border: 1px solid rgba(216, 170, 79, 0.35);
+}
+
+/* The Vault Page Styles */
+.vault-page {
+  display: grid;
+  gap: 2rem;
+}
+
+.vault-page__intro {
+  display: grid;
+  gap: 1rem;
+  max-width: 760px;
+}
+
+.vault-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.vault-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+  margin: 2rem;
+}
+
+@media (max-width: 768px) {
+  .vault-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.vault-card {
+  position: relative;
+  border: 1px solid rgba(216, 170, 79, 0.24);
+  background: linear-gradient(145deg, rgba(45, 30, 20, 0.92), rgba(22, 15, 10, 0.95));
+  overflow: visible;
+  min-width: 300px;
+  max-width: 750px;
+  max-height: 750px;
+  width: auto;
+}
+
+.vault-card__image {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.vault-card__image img {
+  width: 100%;
+  height: auto;
+  max-height: 550px;
+  display: block;
+}
+
+.vault-card__content {
+  position: relative;
+  padding: 1rem;
+}
+
+.vault-card__quote {
+  color: var(--cream);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 1rem;
+  padding: 0.5rem;
+}
+
+.vault-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.vault-like-btn {
+  position: absolute;
+  bottom: -15px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(18, 13, 10, 0.95);
+  border: 1px solid rgba(216, 170, 79, 0.35);
+  color: var(--cream);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+}
+
+.vault-like-btn:hover {
+  background: rgba(216, 170, 79, 0.2);
+  border-color: rgba(216, 170, 79, 0.6);
+  transform: scale(1.1);
+}
+
+.vault-like-btn.liked {
+  color: var(--red);
+  background: rgba(163, 60, 42, 0.2);
+  border-color: rgba(163, 60, 42, 0.6);
+}
+
+.vault-like-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vault-add-btn {
+  border: 1px solid rgba(216, 170, 79, 0.4);
+  border-radius: 2px;
+  background: rgba(45, 30, 20, 0.8);
+  color: var(--gold-soft);
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+  font-weight: 600;
+}
+
+.vault-add-btn:hover {
+  border-color: rgba(240, 207, 134, 0.7);
+  background: rgba(60, 40, 26, 0.9);
+}
+
+/* Vault Modal Styles */
+.vault-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.vault-modal {
+  background: rgba(33, 22, 15, 0.98);
+  border: 1px solid rgba(216, 170, 79, 0.4);
+  border-radius: 4px;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.vault-modal h2 {
+  color: var(--gold-soft);
+  font-size: 1.3rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--fantasy-font);
+}
+
+.vault-modal__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.vault-modal__field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.vault-modal__field label {
+  color: var(--gold-soft);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.vault-modal__input,
+.vault-modal__textarea {
+  border: 1px solid rgba(216, 170, 79, 0.35);
+  border-radius: 2px;
+  background: #130d09;
+  color: var(--cream);
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vault-modal__textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.vault-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.vault-modal__btn {
+  border: 1px solid rgba(216, 170, 79, 0.4);
+  border-radius: 2px;
+  background: rgba(45, 30, 20, 0.8);
+  color: var(--cream);
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.vault-modal__btn:hover {
+  border-color: rgba(240, 207, 134, 0.7);
+  background: rgba(60, 40, 26, 0.9);
+}
+
+.vault-modal__btn--primary {
+  background: rgba(216, 170, 79, 0.18);
+  border-color: rgba(216, 170, 79, 0.6);
+  font-weight: 700;
+}
+
+.vault-modal__btn--primary:hover {
+  background: rgba(216, 170, 79, 0.3);
+}
+
+.vault-modal__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vault-image-upload {
+  display: inline-grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  border: 1px dashed rgba(216, 170, 79, 0.25);
+  background: rgba(20, 14, 10, 0.45);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.vault-image-upload img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.vault-image-upload input[type="file"] {
+  display: none;
+}
+
+.vault-image-placeholder {
+  color: var(--gold-soft);
+  font-weight: 800;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.vault-error {
+  color: #ffc3b5;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.vault-success {
+  color: var(--gold-soft);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
 }

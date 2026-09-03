@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export const ITEMS_BUCKET = "items";
+export const VAULT_BUCKET = "items";
 
 let supabaseClient: SupabaseClient | null = null;
 

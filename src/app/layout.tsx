@@ -44,7 +44,6 @@ export default function RootLayout({
               <Link href="/find-me">Contact us</Link>
               <span>{"© 1492 SGD Harkonian's Dazzling Emporium. All curses disclosed where legally required."}</span>
             </div>
-            <AdminLink />
           </div>
         </footer>
       </body>

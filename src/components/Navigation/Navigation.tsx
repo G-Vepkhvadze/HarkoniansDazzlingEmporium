@@ -1,5 +1,4 @@
 import Link from "next/link";
-import LoginStatus from "@/components/LoginStatus/LoginStatus";
 import ProfileLink from "@/components/ProfileLink/ProfileLink";
 
 export default function Navigation() {
@@ -10,9 +9,12 @@ export default function Navigation() {
             </Link>
             <div className="nav-links">
                 <Link href="/">Home</Link>
+                <ProfileLink />
                 <Link href="/marketplace">Marketplace</Link>
                 <Link href="/find-me">Find Me</Link>
-                <ProfileLink />
+                <Link href="/thevault" className="help-link" aria-label="The Vault">
+                    The Vault
+                </Link>
             </div>
         </nav>
     );
