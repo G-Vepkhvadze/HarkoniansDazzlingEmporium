@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "../prisma";
-import { generatePairingCode, hashToken, verifyToken } from "../crypto";
+import { generatePairingCode, hashToken, verifyToken, isValidPairingCodeFormat } from "../crypto";
 
 // User role type
 type UserRole = "PLAYER" | "DM";
@@ -114,14 +114,8 @@ export async function createPairingCode(
 // PAIRING CODE VALIDATION
 // =============================================
 
-/**
- * Validate a pairing code and return the associated data.
- * 
- * @param code - The pairing code to validate
- * @returns Promise resolving to pairing code data if valid, null otherwise
- */
 export async function validatePairingCode(
-  code: string
+    code: string
 ): Promise<{
   id: string;
   userId: string;
@@ -129,50 +123,62 @@ export async function validatePairingCode(
   used: boolean;
   expiresAt: Date;
 } | null> {
-  const codeHash = await hashToken(code);
+  const normalizedCode = code.trim().toUpperCase();
 
-  const pairingCode = await prisma.foundryPairingCode.findUnique({
-    where: { codeHash },
+  if (!isValidPairingCodeFormat(normalizedCode)) {
+    return null;
+  }
+
+  const candidates = await prisma.foundryPairingCode.findMany({
+    where: {
+      used: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
-  if (!pairingCode) {
-    return null;
+  for (const candidate of candidates) {
+    if (await verifyToken(normalizedCode, candidate.codeHash)) {
+      return {
+        id: candidate.id,
+        userId: candidate.userId,
+        katastroWorldId: candidate.katastroWorldId,
+        used: candidate.used,
+        expiresAt: candidate.expiresAt,
+      };
+    }
   }
 
-  // Check if expired
-  if (pairingCode.expiresAt < new Date()) {
-    return null;
-  }
-
-  // Check if already used
-  if (pairingCode.used) {
-    return null;
-  }
-
-  return {
-    id: pairingCode.id,
-    userId: pairingCode.userId,
-    katastroWorldId: pairingCode.katastroWorldId,
-    used: pairingCode.used,
-    expiresAt: pairingCode.expiresAt,
-  };
+  return null;
 }
-
 /**
  * Mark a pairing code as used.
- * 
- * @param code - The pairing code or codeHash
+ *
  * @returns Promise resolving to true if marked, false if not found
+ * @param pairingCodeId
  */
-export async function markPairingCodeAsUsed(code: string): Promise<boolean> {
-  const codeHash = await hashToken(code);
-
+export async function markPairingCodeAsUsed(
+    pairingCodeId: string
+): Promise<boolean> {
   try {
-    await prisma.foundryPairingCode.update({
-      where: { codeHash },
-      data: { used: true },
+    const result = await prisma.foundryPairingCode.updateMany({
+      where: {
+        id: pairingCodeId,
+        used: false,
+        expiresAt: {
+          gt: new Date()
+        }
+      },
+      data: {
+        used: true
+      }
     });
-    return true;
+
+    return result.count === 1;
   } catch {
     return false;
   }
@@ -224,26 +230,41 @@ export async function completeWorldPairing(
   worldSecret?: string;
   error?: string;
 }> {
-  if (!pairingCode?.trim()) {
+  const normalizedPairingCode = pairingCode?.trim().toUpperCase();
+  const normalizedFoundryWorldId = foundryWorldId?.trim();
+
+  if (!normalizedPairingCode) {
     return {
       success: false,
       error: "Pairing code is required."
     };
   }
 
-  if (!foundryWorldId?.trim()) {
+  if (!normalizedFoundryWorldId) {
     return {
       success: false,
       error: "Foundry world ID is required."
     };
   }
 
-  const pairingData = await validatePairingCode(pairingCode);
+  const pairingData = await validatePairingCode(normalizedPairingCode);
 
   if (!pairingData) {
     return {
       success: false,
       error: "Invalid, expired, or already used pairing code."
+    };
+  }
+
+  // Prevent accidentally pairing a world a second time,
+  // unless this pairing code is specifically for an existing Katastro world.
+  if (
+      !pairingData.katastroWorldId &&
+      await isWorldAlreadyPaired(normalizedFoundryWorldId)
+  ) {
+    return {
+      success: false,
+      error: "This Foundry world is already paired."
     };
   }
 
@@ -258,7 +279,7 @@ export async function completeWorldPairing(
         id: pairingData.katastroWorldId
       },
       data: {
-        foundryWorldId,
+        foundryWorldId: normalizedFoundryWorldId,
         dmUserId: pairingData.userId,
         worldSecretHash
       },
@@ -271,7 +292,7 @@ export async function completeWorldPairing(
     world = await prisma.katastroWorld.create({
       data: {
         worldSecretHash,
-        foundryWorldId,
+        foundryWorldId: normalizedFoundryWorldId,
         dmUserId: pairingData.userId
       },
       select: {
@@ -281,14 +302,26 @@ export async function completeWorldPairing(
     });
   }
 
-  await prisma.foundryPairingCode.update({
+  // Consume the exact pairing record we validated.
+  const consumed = await prisma.foundryPairingCode.updateMany({
     where: {
-      id: pairingData.id
+      id: pairingData.id,
+      used: false,
+      expiresAt: {
+        gt: new Date()
+      }
     },
     data: {
       used: true
     }
   });
+
+  if (consumed.count !== 1) {
+    return {
+      success: false,
+      error: "Pairing code is no longer valid."
+    };
+  }
 
   return {
     success: true,

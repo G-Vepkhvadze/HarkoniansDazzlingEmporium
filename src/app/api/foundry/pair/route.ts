@@ -4,6 +4,7 @@ import { getSessionByToken } from "@/lib/auth/session";
 import { SESSION_COOKIE_CONFIG, requireDM } from "@/lib/auth/index";
 import { createPairingCode, getPairingStatus } from "@/lib/foundry/pairing";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
+import { addFoundryCorsHeaders, foundryOptions } from "@/lib/foundry/cors";
 
 export const runtime = 'nodejs';
 
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
         { error: "DM authentication required" },
         { status: 401 }
       );
-      addCorsHeaders(response, request);
+      addFoundryCorsHeaders(response, request);
       return response;
     }
 
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
       world: pairingStatus.world,
     });
 
-    addCorsHeaders(response, request);
+    addFoundryCorsHeaders(response, request);
     return response;
   } catch (error) {
     console.error("Get pairing status error:", error);
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
       { error: "An error occurred" },
       { status: 500 }
     );
-    addCorsHeaders(response, request);
+    addFoundryCorsHeaders(response, request);
     return response;
   }
 }
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
         { error: "DM authentication required" },
         { status: 401 }
       );
-      addCorsHeaders(response, request);
+      addFoundryCorsHeaders(response, request);
       return response;
     }
 
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
       expiresIn: 900, // 15 minutes in seconds
     }, { status: 201 });
 
-    addCorsHeaders(response, request);
+    addFoundryCorsHeaders(response, request);
     return response;
   } catch (error) {
     console.error("Create pairing code error:", error);
@@ -120,60 +121,12 @@ export async function POST(request: Request) {
       { error: (error as Error).message || "An error occurred" },
       { status: 400 }
     );
-    addCorsHeaders(response, request);
+    addFoundryCorsHeaders(response, request);
     return response;
   }
 }
 
-const ALLOWED_ORIGINS = [
-    "https://lily_livered-the-katastro-campaign.forge-vtt.com",
-    "https://forge-vtt.com",
-    "http://localhost:30000",
-    "http://127.0.0.1:30000"
-];
-
-/**
- * Check if an origin is allowed.
- * Allows exact matches from ALLOWED_ORIGINS, or any subdomain of forge-vtt.com.
- */
-function isOriginAllowed(origin: string | null): boolean {
-    if (!origin) return false;
-    
-    // Check exact matches
-    if (ALLOWED_ORIGINS.includes(origin)) {
-        return true;
-    }
-    
-    // Allow any subdomain of forge-vtt.com
-    if (origin.endsWith(".forge-vtt.com") || origin === "https://forge-vtt.com") {
-        return true;
-    }
-    
-    return false;
-}
-
-/**
- * Helper to add CORS headers to a response.
- */
-function addCorsHeaders(response: NextResponse, request: Request): void {
-  const origin = request.headers.get("origin");
-  
-  // If origin is present and allowed, echo it back.
-  // Otherwise, use the first allowed origin as default.
-  // Never use "*" when credentials are allowed.
-  const allowedOrigin = origin && isOriginAllowed(origin)
-      ? origin
-      : ALLOWED_ORIGINS[0];
-  
-  response.headers.set("Access-Control-Allow-Credentials", "true");
-  response.headers.set("Access-Control-Allow-Origin", allowedOrigin);
-  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-}
-
 // Handle OPTIONS for CORS preflight
 export async function OPTIONS(request: Request) {
-  const response = new NextResponse(null, { status: 204 });
-  addCorsHeaders(response, request);
-  return response;
+  return foundryOptions(request);
 }

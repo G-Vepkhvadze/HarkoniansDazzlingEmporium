@@ -32,13 +32,13 @@ export const LINK_REQUEST_EXPIRY_MS = 15 * 60 * 1000;
  * @param foundryWorldId - The Foundry world ID
  * @param foundryActorId - The Foundry Actor ID
  * @param katastroWorldId - The Katastro world ID
- * @returns Promise resolving to { requestId: string, rawRequestId: string }
+ * @returns Promise resolving to { requestId: string }
  */
 export async function createLinkRequest(
   foundryWorldId: string,
   foundryActorId: string,
   katastroWorldId: string
-): Promise<{ requestId: string; rawRequestId: string }> {
+): Promise<{ requestId: string }> {
   // Verify the world exists and is paired
   const world = await prisma.katastroWorld.findUnique({
     where: { id: katastroWorldId },
@@ -61,8 +61,8 @@ export async function createLinkRequest(
   }
 
   // Generate a secure request ID
-  const rawRequestId = generateSecureToken(32);
-  const requestIdHash = await hashToken(rawRequestId);
+  const requestId = generateSecureToken(32);
+  const requestIdHash = await hashToken(requestId);
 
   // Create the link request
   await prisma.foundryLinkRequest.create({
@@ -75,7 +75,7 @@ export async function createLinkRequest(
     },
   });
 
-  return { requestId: rawRequestId, rawRequestId };
+  return { requestId };
 }
 
 /**
@@ -94,38 +94,41 @@ export async function validateLinkRequest(
   used: boolean;
   expiresAt: Date;
 } | null> {
-  const requestIdHash = await hashToken(requestId);
-
-  const linkRequest = await prisma.foundryLinkRequest.findUnique({
-    where: { requestIdHash },
+  // Fetch all candidate link requests that are not used and not expired
+  const candidates = await prisma.foundryLinkRequest.findMany({
+    where: {
+      used: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
-  if (!linkRequest) {
-    return null;
+  for (const candidate of candidates) {
+    if (await verifyToken(requestId, candidate.requestIdHash)) {
+      // Check if expired (double-check, though where clause should filter this)
+      if (candidate.expiresAt < new Date()) {
+        await prisma.foundryLinkRequest.delete({
+          where: { id: candidate.id },
+        });
+        return null;
+      }
+
+      return {
+        id: candidate.id,
+        foundryWorldId: candidate.foundryWorldId,
+        foundryActorId: candidate.foundryActorId,
+        katastroWorldId: candidate.katastroWorldId,
+        used: candidate.used,
+        expiresAt: candidate.expiresAt,
+      };
+    }
   }
 
-  // Check if expired
-  if (linkRequest.expiresAt < new Date()) {
-    // Clean up expired request
-    await prisma.foundryLinkRequest.delete({
-      where: { requestIdHash },
-    });
-    return null;
-  }
-
-  // Check if already used
-  if (linkRequest.used) {
-    return null;
-  }
-
-  return {
-    id: linkRequest.id,
-    foundryWorldId: linkRequest.foundryWorldId,
-    foundryActorId: linkRequest.foundryActorId,
-    katastroWorldId: linkRequest.katastroWorldId,
-    used: linkRequest.used,
-    expiresAt: linkRequest.expiresAt,
-  };
+  return null;
 }
 
 /**
@@ -135,17 +138,31 @@ export async function validateLinkRequest(
  * @returns Promise resolving to true if marked, false if not found
  */
 export async function markLinkRequestAsUsed(requestId: string): Promise<boolean> {
-  const requestIdHash = await hashToken(requestId);
+  // Fetch all unused, non-expired link requests
+  const candidates = await prisma.foundryLinkRequest.findMany({
+    where: {
+      used: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+  });
 
-  try {
-    await prisma.foundryLinkRequest.update({
-      where: { requestIdHash },
-      data: { used: true },
-    });
-    return true;
-  } catch {
-    return false;
+  for (const candidate of candidates) {
+    if (await verifyToken(requestId, candidate.requestIdHash)) {
+      try {
+        await prisma.foundryLinkRequest.update({
+          where: { id: candidate.id },
+          data: { used: true },
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
   }
+
+  return false;
 }
 
 /**
@@ -165,7 +182,6 @@ export async function completeCharacterLinking(
   character?: { id: string; name: string };
   error?: string;
 }> {
-  // Validate the link request
   const linkRequest = await validateLinkRequest(requestId);
 
   if (!linkRequest) {
@@ -175,7 +191,6 @@ export async function completeCharacterLinking(
     };
   }
 
-  // Verify the user exists
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
@@ -187,7 +202,6 @@ export async function completeCharacterLinking(
     };
   }
 
-  // Check if this user already has a character with this actor linked
   const existingCharacter = await prisma.character.findFirst({
     where: {
       userId,
@@ -310,10 +324,14 @@ export async function validateAuthCode(
   used: boolean;
   expiresAt: Date;
 } | null> {
-  const codeHash = await hashToken(code);
-
-  const authCode = await prisma.authCode.findUnique({
-    where: { codeHash },
+  // Fetch all candidate auth codes that are not used and not expired
+  const candidates = await prisma.authCode.findMany({
+    where: {
+      used: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
     include: {
       user: {
         select: { id: true, username: true, role: true },
@@ -322,33 +340,32 @@ export async function validateAuthCode(
         select: { id: true, name: true },
       },
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
-  if (!authCode) {
-    return null;
+  for (const candidate of candidates) {
+    if (await verifyToken(code, candidate.codeHash)) {
+      // Check if expired (double-check, though where clause should filter this)
+      if (candidate.expiresAt < new Date()) {
+        await prisma.authCode.delete({
+          where: { id: candidate.id },
+        });
+        return null;
+      }
+
+      return {
+        id: candidate.id,
+        userId: candidate.userId,
+        characterId: candidate.characterId || null,
+        used: candidate.used,
+        expiresAt: candidate.expiresAt,
+      };
+    }
   }
 
-  // Check if expired
-  if (authCode.expiresAt < new Date()) {
-    // Clean up expired code
-    await prisma.authCode.delete({
-      where: { codeHash },
-    });
-    return null;
-  }
-
-  // Check if already used
-  if (authCode.used) {
-    return null;
-  }
-
-  return {
-    id: authCode.id,
-    userId: authCode.userId,
-    characterId: authCode.characterId || null,
-    used: authCode.used,
-    expiresAt: authCode.expiresAt,
-  };
+  return null;
 }
 
 /**
@@ -358,17 +375,31 @@ export async function validateAuthCode(
  * @returns Promise resolving to true if marked, false if not found
  */
 export async function markAuthCodeAsUsed(code: string): Promise<boolean> {
-  const codeHash = await hashToken(code);
+  // Fetch all unused, non-expired auth codes
+  const candidates = await prisma.authCode.findMany({
+    where: {
+      used: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+  });
 
-  try {
-    await prisma.authCode.update({
-      where: { codeHash },
-      data: { used: true },
-    });
-    return true;
-  } catch {
-    return false;
+  for (const candidate of candidates) {
+    if (await verifyToken(code, candidate.codeHash)) {
+      try {
+        await prisma.authCode.update({
+          where: { id: candidate.id },
+          data: { used: true },
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
   }
+
+  return false;
 }
 
 /**

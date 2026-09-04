@@ -1,34 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getCurrentUserClient } from "@/lib/auth";
+import { useAuth } from "@/components/AuthProvider/AuthProvider";
 
 /**
  * CurrentGold component - displays the character's current gold amount.
  * Shows 0 as default since there are no actual Foundry characters connected.
  */
 export default function CurrentGold() {
-  const [goldAmount, setGoldAmount] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchGold() {
-      try {
-        const user = await getCurrentUserClient();
-        // For now, always set to 0 as there are no actual Foundry characters connected
-        // In the future, this would fetch from the character data
-        setGoldAmount(0);
-      } catch {
-        setGoldAmount(0);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchGold();
-  }, []);
+  const { isAuthenticated, loading } = useAuth();
+  const goldAmount = 0; // For now, always 0 as there are no actual Foundry characters connected
 
   if (loading) {
+    return null;
+  }
+
+  // Only show for authenticated users
+  if (!isAuthenticated) {
     return null;
   }
 

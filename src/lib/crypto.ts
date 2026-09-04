@@ -52,31 +52,30 @@ export function generateSecureToken(byteLength: number = 32): string {
  * @returns Human-readable code string
  */
 export function generatePairingCode(): string {
-  const buffer = new Uint8Array(8); // 64 bits = 8 bytes
-  
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(buffer);
+  const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const values = new Uint8Array(9);
+
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(values);
   } else {
-    for (let i = 0; i < 8; i++) {
-      buffer[i] = Math.floor(Math.random() * 256);
+    for (let i = 0; i < values.length; i++) {
+      values[i] = Math.floor(Math.random() * 256);
     }
   }
-  
-  // Convert to base36 (0-9, A-Z) for human-readable format
-  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
   const segments: string[] = [];
-  
-  for (let i = 0; i < 8; i += 2) {
-    const bytes = buffer.slice(i, i + 2);
-    const value = bytes[0] + (bytes[1] << 8);
-    const segment = [];
+
+  for (let i = 0; i < values.length; i += 3) {
+    let segment = "";
+
     for (let j = 0; j < 3; j++) {
-      segment.push(chars[(value >> (8 - j * 6)) & 0x3F]);
+      segment += chars[values[i + j] % chars.length];
     }
-    segments.push(segment.join(''));
+
+    segments.push(segment);
   }
-  
-  return `KAT-${segments.slice(0, 2).join('-')}-${segments.slice(2).join('-')}`;
+
+  return `KAT-${segments.join("-")}`;
 }
 
 // =============================================
@@ -149,7 +148,7 @@ export function isValidHexToken(token: string, length: number = 64): boolean {
  * @returns true if valid format
  */
 export function isValidPairingCodeFormat(code: string): boolean {
-  const pairingCodeRegex = /^KAT-[A-Z0-9]{3,4}(?:-[A-Z0-9]{3,4}){2,3}$/i;
+  const pairingCodeRegex = /^KAT-[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{3}$/i;
   return pairingCodeRegex.test(code);
 }
 

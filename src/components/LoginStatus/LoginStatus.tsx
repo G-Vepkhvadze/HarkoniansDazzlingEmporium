@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCurrentUserClient } from "@/lib/auth";
 import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider/AuthProvider";
 
 /**
  * Character data for the login status.
@@ -19,46 +19,42 @@ interface CharacterData {
  * Links to the user profile page when clicked.
  */
 export default function LoginStatus() {
-  const [user, setUser] = useState<{
-    id: string;
-    username: string;
-    role: string;
-  } | null>(null);
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [characters, setCharacters] = useState<CharacterData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check current user on mount
-    async function fetchData() {
-      const currentUser = await getCurrentUserClient();
-      setUser(currentUser);
-
-      // If authenticated, fetch characters
-      if (currentUser) {
-        try {
-          const response = await fetch("/api/characters", {
-            credentials: "include",
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setCharacters(data.characters || []);
-          }
-        } catch {
-          // Failed to fetch characters, continue without them
-        }
+    // If authenticated, fetch characters
+    async function fetchCharacters() {
+      if (!isAuthenticated || !user) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const response = await fetch("/api/characters", {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCharacters(data.characters || []);
+        }
+      } catch {
+        // Failed to fetch characters, continue without them
+      } finally {
+        setLoading(false);
+      }
     }
 
-    fetchData();
-  }, []);
+    fetchCharacters();
+  }, [isAuthenticated, user]);
 
-  if (loading) {
+  if (authLoading || loading) {
     // Don't show anything while loading
     return null;
   }
 
-  if (!user) {
+  if (!user || !isAuthenticated) {
     // Not logged in - show nothing
     return null;
   }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { getImageUrl } from "@/lib/imageUrl";
-import { isLoggedIn } from "@/lib/auth";
+import { useAuth } from "@/components/AuthProvider/AuthProvider";
 
 interface VaultCardProps {
   id: string;
@@ -21,20 +21,13 @@ export default function VaultCard({
   initialIsLiked = false,
   onLikeToggle,
 }: VaultCardProps) {
+  const { isAuthenticated, loading } = useAuth();
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
-  const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
-  useEffect(() => {
-    // Check if user is logged in
-    isLoggedIn().then((loggedIn) => {
-      setIsLoggedInState(loggedIn);
-    });
-  }, []);
-
   const handleLikeToggle = async () => {
-    if (!isLoggedInState || isToggling) return;
+    if (!isAuthenticated || isToggling || loading) return;
 
     setIsToggling(true);
     try {
@@ -59,7 +52,7 @@ export default function VaultCard({
         }
       }
     } catch (error) {
-      console.error("Error toggling like:", error);
+      // Error handling is silent to prevent console errors as requested
     } finally {
       setIsToggling(false);
     }
@@ -84,8 +77,8 @@ export default function VaultCard({
           <button
             className={`vault-like-btn ${isLiked ? "liked" : ""}`}
             onClick={handleLikeToggle}
-            disabled={!isLoggedInState || isToggling}
-            title={!isLoggedInState ? "Login to like" : ""}
+            disabled={!isAuthenticated || isToggling || loading}
+            title={!isAuthenticated ? "Login to like" : ""}
             aria-label={isLiked ? "Unlike this vault item" : "Like this vault item"}
           >
             {isLiked ? "♥" : "♡"}

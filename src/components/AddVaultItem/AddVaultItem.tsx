@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { isDMClient } from "@/lib/auth";
+import { useState, useRef } from "react";
+import { useAuth } from "@/components/AuthProvider/AuthProvider";
 
 interface AddVaultItemProps {
   onAdded?: () => void;
@@ -11,7 +11,7 @@ interface AddVaultItemProps {
 const MAX_IMAGE_WIDTH = 900;
 
 export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
-  const [isDm, setIsDm] = useState<boolean | null>(null);
+  const { isDM, loading } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -22,19 +22,8 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if user is DM
-  useEffect(() => {
-    isDMClient().then((dm) => {
-      setIsDm(dm);
-    });
-  }, []);
-
-  // If not DM, don't show anything
-  if (isDm === null) {
-    return null;
-  }
-
-  if (!isDm) {
+  // If loading or not DM, don't show anything
+  if (loading || !isDM) {
     return null;
   }
 

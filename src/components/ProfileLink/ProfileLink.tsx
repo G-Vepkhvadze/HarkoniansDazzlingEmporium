@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { isLoggedIn, getCurrentUserClient } from "@/lib/auth";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider/AuthProvider";
 
 /**
  * ProfileLink component - always shows as a nav link.
@@ -11,24 +9,9 @@ import { useRouter } from "next/navigation";
  * When logged in: Shows "Profile" link to /user or /dm based on role
  */
 export default function ProfileLink() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [user, setUser] = useState<{ id: string; username: string; role: string } | null>(null);
-  const router = useRouter();
+  const { isAuthenticated, user, loading } = useAuth();
 
-  useEffect(() => {
-    async function checkAuth() {
-      const loggedIn = await isLoggedIn();
-      setIsAuthenticated(loggedIn);
-      
-      if (loggedIn) {
-        const currentUser = await getCurrentUserClient();
-        setUser(currentUser);
-      }
-    }
-    checkAuth();
-  }, []);
-
-  if (isAuthenticated === null) {
+  if (loading) {
     // Still loading - show a placeholder
     return (
       <Link href="/auth" style={{ color: "inherit", textDecoration: "none" }}>
