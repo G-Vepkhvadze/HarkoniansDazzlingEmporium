@@ -1,3 +1,5 @@
+import prisma from "@/lib/prisma";
+
 interface FoundryBroadcastMessage {
     event: string;
     payload: unknown;
