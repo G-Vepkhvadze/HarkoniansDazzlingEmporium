@@ -21,6 +21,16 @@ const uncial = Uncial_Antiqua({
 export const metadata = {
   title: "Harkonian's Dazzling Emporium",
   description: "A fantasy marketplace for magical wares, relics, and adventuring supplies.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Harkonian's Dazzling Emporium"
+  }
+};
+
+export const viewport = {
+  themeColor: "#2d1e14"
 };
 
 export default async function RootLayout({
