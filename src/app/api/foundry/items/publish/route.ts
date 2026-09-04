@@ -241,7 +241,6 @@ export async function POST(request: Request) {
           equals: payload.foundryItemUuid,
         },
       },
-      select: { id: true },
     });
 
     if (existingItem) {

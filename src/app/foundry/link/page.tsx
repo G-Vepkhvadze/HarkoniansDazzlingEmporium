@@ -31,7 +31,6 @@ function FoundryLinkPageContent() {
       setIsAuthenticated(loggedIn);
 
       if (!loggedIn) {
-        // Redirect to login with return URL
         router.push(`/auth?returnUrl=/foundry/link?requestId=${requestId}`);
         return;
       }
@@ -76,12 +75,14 @@ function FoundryLinkPageContent() {
   }, [requestId, router]);
 
   async function handleCreateCharacter() {
-    if (!user || !linkRequest) {
+    if (!user || !linkRequest || !requestId) {
       setError("You must be logged in and have a valid link request.");
       return;
     }
 
-    if (!characterName.trim()) {
+    const name = characterName.trim();
+
+    if (!name) {
       setError("Please enter a character name.");
       return;
     }
@@ -91,17 +92,45 @@ function FoundryLinkPageContent() {
     setStatus("");
 
     try {
-      setStatus(`Character "${characterName}" will be linked to your Foundry Actor.`);
+      const response = await fetch("/api/foundry/link/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          requestId,
+          characterName: name,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+            data.error || "Failed to create and link character."
+        );
+      }
+
+      setStatus(
+          `Character "${name}" has been created and linked successfully.`
+      );
+
       setShowCreateCharacter(false);
-    } catch (err) {
-      setError("An error occurred while creating the character.");
+      setCharacterName("");
+    } catch (error) {
+      setError(
+          error instanceof Error
+              ? error.message
+              : "An error occurred while creating the character."
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
   async function handleSelectExistingCharacter() {
-    if (!user || !linkRequest || !selectedCharacterId) {
+    if (!user || !linkRequest || !selectedCharacterId || !requestId) {
       setError("Please select a character.");
       return;
     }
@@ -111,14 +140,39 @@ function FoundryLinkPageContent() {
     setStatus("");
 
     try {
-      const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
-      if (selectedCharacter) {
-        setStatus(`Your character "${selectedCharacter.name}" will be linked to Foundry Actor ${linkRequest.foundryActorId}.`);
-      } else {
-        setError("Selected character not found.");
+      const response = await fetch("/api/foundry/link/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          requestId,
+          characterId: selectedCharacterId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+            data.error || "Failed to approve character link."
+        );
       }
-    } catch (err) {
-      setError("An error occurred while linking the character.");
+
+      const selectedCharacter = characters.find(
+          (character) => character.id === selectedCharacterId
+      );
+
+      setStatus(
+          `Character "${selectedCharacter?.name ?? "Character"}" has been linked successfully.`
+      );
+    } catch (error) {
+      setError(
+          error instanceof Error
+              ? error.message
+              : "An error occurred while linking the character."
+      );
     } finally {
       setIsLoading(false);
     }

@@ -45,14 +45,16 @@ export async function POST(
             ? body.characterId.trim()
             : "";
 
-    if (
-        !requestId ||
-        !characterId
-    ) {
+    const characterName =
+        typeof body?.characterName === "string"
+            ? body.characterName.trim()
+            : "";
+
+    if (!requestId || (!characterId && !characterName)) {
         const response = NextResponse.json(
             {
                 error:
-                    "requestId and characterId are required."
+                    "requestId and either characterId or characterName are required."
             },
             { status: 400 }
         );
@@ -104,15 +106,74 @@ export async function POST(
         return response;
     }
 
-    const character =
-        await prisma.character.findFirst({
+    let character;
+
+    if (characterId) {
+        character = await prisma.character.findFirst({
             where: {
                 id: characterId,
                 userId: session.user.id,
-                katastroWorldId:
-                linkRequest.katastroWorldId
-            }
+                katastroWorldId: linkRequest.katastroWorldId,
+            },
         });
+
+        if (!character) {
+            const response = NextResponse.json(
+                {
+                    error: "Character is not available for this link.",
+                },
+                { status: 403 }
+            );
+            addFoundryCorsHeaders(response, request);
+            return response;
+        }
+
+        if (
+            character.foundryActorId &&
+            character.foundryActorId !== linkRequest.foundryActorId
+        ) {
+            const response = NextResponse.json(
+                {
+                    error:
+                        "This character is already linked to another Foundry Actor.",
+                },
+                { status: 409 }
+            );
+            addFoundryCorsHeaders(response, request);
+            return response;
+        }
+
+        character = await prisma.character.update({
+            where: {
+                id: character.id,
+            },
+            data: {
+                foundryWorldId: linkRequest.foundryWorldId,
+                foundryActorId: linkRequest.foundryActorId,
+                katastroWorldId: linkRequest.katastroWorldId,
+            },
+        });
+    } else {
+        if (!characterName) {
+            const response = NextResponse.json(
+                { error: "Character name is required." },
+                { status: 400 }
+            );
+            addFoundryCorsHeaders(response, request);
+            return response;
+        }
+
+        character = await prisma.character.create({
+            data: {
+                userId: session.user.id,
+                name: characterName,
+                foundryWorldId: linkRequest.foundryWorldId,
+                foundryActorId: linkRequest.foundryActorId,
+                katastroWorldId: linkRequest.katastroWorldId,
+                creditBalance: 0,
+            },
+        });
+    }
 
     if (!character) {
         const response = NextResponse.json(
@@ -125,6 +186,8 @@ export async function POST(
         addFoundryCorsHeaders(response, request);
         return response;
     }
+
+
 
     /*
      * If the character is already assigned
