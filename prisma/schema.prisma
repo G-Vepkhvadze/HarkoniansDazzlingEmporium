@@ -17,10 +17,13 @@ enum ItemRarity {
 
 enum ItemType {
   WEAPON
-  ARMOR
-  ACCESSORY
-  SCROLL
-  POTION
+  EQUIPMENT
+  CONSUMABLE
+  TOOL
+  LOOT
+  CONTAINER
+  SPELL
+  FEAT
 }
 
 enum UserRole {

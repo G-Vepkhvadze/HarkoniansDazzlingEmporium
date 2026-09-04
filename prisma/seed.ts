@@ -1,8 +1,28 @@
-import { PrismaClient, UserRole } from "@prisma/client";
+import { PrismaClient, UserRole, ItemType } from "@prisma/client";
 import { seedItems } from "@/data/seedItems";
 import { hashPassword } from "../src/lib/password";
 
 const prisma = new PrismaClient();
+
+// Map string types from seedItems to ItemType enum
+function mapSeedType(type: string): ItemType {
+  const typeMap: Record<string, ItemType> = {
+    WEAPON: ItemType.WEAPON,
+    EQUIPMENT: ItemType.EQUIPMENT,
+    CONSUMABLE: ItemType.CONSUMABLE,
+    TOOL: ItemType.TOOL,
+    LOOT: ItemType.LOOT,
+    CONTAINER: ItemType.CONTAINER,
+    SPELL: ItemType.SPELL,
+    FEAT: ItemType.FEAT,
+    // Legacy types (shouldn't be in seedItems but handle just in case)
+    ARMOR: ItemType.EQUIPMENT,
+    ACCESSORY: ItemType.EQUIPMENT,
+    SCROLL: ItemType.CONSUMABLE,
+    POTION: ItemType.CONSUMABLE,
+  };
+  return typeMap[type.toUpperCase()] || ItemType.EQUIPMENT;
+}
 
 async function main() {
   // Seed initial DM user
@@ -47,7 +67,7 @@ async function main() {
                     image: item.image,
                     description: item.description,
                     rarity: item.rarity,
-                    type: item.type,
+                    type: mapSeedType(item.type),
                     price: item.price,
                     deal: item.deal,
                     discountPercent: item.discountPercent,
@@ -56,7 +76,10 @@ async function main() {
             });
         } else {
             await prisma.item.create({
-                data: item,
+                data: {
+                    ...item,
+                    type: mapSeedType(item.type),
+                },
             });
         }
     }

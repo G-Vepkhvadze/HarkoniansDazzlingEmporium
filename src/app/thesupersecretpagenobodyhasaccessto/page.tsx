@@ -31,14 +31,14 @@ interface NewItem {
 }
 
 const RARITIES = ["COMMON", "UNCOMMON", "RARE", "VERY_RARE", "LEGENDARY"];
-const TYPES = ["WEAPON", "ARMOR", "ACCESSORY", "SCROLL", "POTION"];
+const TYPES = ["WEAPON", "EQUIPMENT", "CONSUMABLE", "TOOL", "LOOT", "CONTAINER", "SPELL", "FEAT"];
 
 const emptyNewItem: NewItem = {
   image: "",
   name: "",
   description: "",
   rarity: "COMMON",
-  type: "POTION",
+  type: "CONSUMABLE",
   price: "",
   deal: false,
   discountPercent: "0",

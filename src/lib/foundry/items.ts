@@ -264,23 +264,34 @@ export function mapRarity(rarity?: string): ItemRarity {
 
 /**
  * Map string type to ItemType enum.
+ * Uses D&D 5e standard categories with backward compatibility.
  * 
  * @param type - The type string (case insensitive)
  * @returns The ItemType enum value
  */
 export function mapType(type: string): ItemType {
-  if (!type) return ItemType.ACCESSORY;
+  if (!type) return ItemType.EQUIPMENT;
   
   const normalized = type.toUpperCase();
   const typeMap: Record<string, ItemType> = {
+    // D&D 5e standard types
     WEAPON: ItemType.WEAPON,
-    ARMOR: ItemType.ARMOR,
-    ACCESSORY: ItemType.ACCESSORY,
-    SCROLL: ItemType.SCROLL,
-    POTION: ItemType.POTION,
+    EQUIPMENT: ItemType.EQUIPMENT,
+    CONSUMABLE: ItemType.CONSUMABLE,
+    TOOL: ItemType.TOOL,
+    LOOT: ItemType.LOOT,
+    CONTAINER: ItemType.CONTAINER,
+    SPELL: ItemType.SPELL,
+    FEAT: ItemType.FEAT,
+    
+    // Legacy mappings for backward compatibility
+    ARMOR: ItemType.EQUIPMENT,
+    ACCESSORY: ItemType.EQUIPMENT,
+    SCROLL: ItemType.CONSUMABLE,
+    POTION: ItemType.CONSUMABLE,
   };
   
-  return typeMap[normalized] || ItemType.ACCESSORY;
+  return typeMap[normalized] || ItemType.EQUIPMENT;
 }
 
 // =============================================

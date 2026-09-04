@@ -7,10 +7,13 @@ export type ItemRarity =
 
 export type ItemType =
     | "WEAPON"
-    | "ARMOR"
-    | "ACCESSORY"
-    | "SCROLL"
-    | "POTION";
+    | "EQUIPMENT"
+    | "CONSUMABLE"
+    | "TOOL"
+    | "LOOT"
+    | "CONTAINER"
+    | "SPELL"
+    | "FEAT";
 
 export interface ShopItem {
     id: string;

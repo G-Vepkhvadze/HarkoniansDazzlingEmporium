@@ -15,10 +15,13 @@ const rarityOptions: Array<{ label: string; value: ItemRarity }> = [
 
 const typeOptions: Array<{ label: string; value: ItemType }> = [
     { label: "Weapon", value: "WEAPON" },
-    { label: "Armor", value: "ARMOR" },
-    { label: "Accessory", value: "ACCESSORY" },
-    { label: "Scrolls", value: "SCROLL" },
-    { label: "Potions", value: "POTION" },
+    { label: "Equipment", value: "EQUIPMENT" },
+    { label: "Consumable", value: "CONSUMABLE" },
+    { label: "Tool", value: "TOOL" },
+    { label: "Loot", value: "LOOT" },
+    { label: "Container", value: "CONTAINER" },
+    { label: "Spell", value: "SPELL" },
+    { label: "Feat", value: "FEAT" },
 ];
 
 type StockFilter = "ALL" | "IN_STOCK" | "OUT_OF_STOCK";

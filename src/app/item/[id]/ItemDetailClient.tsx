@@ -37,10 +37,18 @@ const rarityLabels: Record<string, string> = {
 
 const typeLabels: Record<string, string> = {
   WEAPON: "Weapon",
-  ARMOR: "Armor",
-  ACCESSORY: "Accessory",
-  SCROLL: "Scroll",
-  POTION: "Potion",
+  EQUIPMENT: "Equipment",
+  CONSUMABLE: "Consumable",
+  TOOL: "Tool",
+  LOOT: "Loot",
+  CONTAINER: "Container",
+  SPELL: "Spell",
+  FEAT: "Feat",
+  // Legacy support for existing data
+  ARMOR: "Equipment",
+  ACCESSORY: "Equipment",
+  SCROLL: "Consumable",
+  POTION: "Consumable",
 };
 
 function formatGold(n: number) {
