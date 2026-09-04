@@ -11,9 +11,8 @@ export default function Navigation() {
                 <Link href="/">Home</Link>
                 <ProfileLink />
                 <Link href="/marketplace">Marketplace</Link>
-                <Link href="/find-me">Find Me</Link>
                 <Link href="/thevault" className="help-link" aria-label="The Vault">
-                    The Vault
+                    Vault
                 </Link>
             </div>
         </nav>

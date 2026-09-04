@@ -55,8 +55,7 @@ select {
 .site-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
+  gap: 4rem;
   width: min(1120px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 1rem 0;
@@ -72,8 +71,8 @@ select {
 
 .nav-links {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  justify-content: start;
+  gap: 10px;
 }
 
 .nav-links a {
@@ -549,6 +548,21 @@ h3 {
   text-align: center;
 }
 
+.current-gold {
+  position: fixed;
+  width: 100%;
+  max-width: 280px;
+  padding: 0.25rem 1rem;
+  right: 0.5rem;
+  transform: translateY(-10px);
+  background: rgba(45, 30, 20, 0.95);
+  border: 1px solid rgba(216, 170, 79, 0.28);
+  border-radius: 2px;
+  color: var(--gold-soft);
+  font-weight: 700;
+  z-index: 999;
+}
+
 .site-footer a {
   color: var(--gold-soft);
 }
@@ -562,14 +576,25 @@ h3 {
 }
 
 @media (max-width: 800px) {
+  .current-gold {
+    padding: 0.25rem 1rem;
+    left: 50%;
+    right: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+
   .site-nav {
     align-items: center;
     flex-direction: column;
     text-align: center;
+    gap: 1rem;
   }
 
   .nav-links {
     justify-content: center;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
   }
 
   .hero-section,

@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth/index";
 import { AuthProvider } from "@/components/AuthProvider/AuthProvider";
 import Navigation from "@/components/Navigation/Navigation";
 import Link from "next/link";
-import AdminLink from "@/components/AdminLink/AdminLink";
 import CurrentGold from "@/components/CurrentGold/CurrentGold";
 
 const cinzel = Cinzel_Decorative({
@@ -48,11 +47,8 @@ export default async function RootLayout({
           <main className="page-shell">{children}</main>
           <footer className="site-footer">
             <div className="site-footer__inner">
-              <div>
-                <strong>Business deals:</strong> guild bulk discounts, caravan delivery contracts, wizard tower restocks.
-              </div>
               <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-                <Link href="/find-me">Contact us</Link>
+                <Link href="/find-me">Find Me</Link>
                 <span>{"© 1492 SGD Harkonian's Dazzling Emporium. All curses disclosed where legally required."}</span>
               </div>
             </div>

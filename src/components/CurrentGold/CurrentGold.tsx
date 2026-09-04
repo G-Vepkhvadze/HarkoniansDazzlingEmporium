@@ -20,19 +20,7 @@ export default function CurrentGold() {
   }
 
   return (
-    <div
-      className="current-gold"
-      style={{
-        padding: "0.5rem 1rem",
-        background: "rgba(45, 30, 20, 0.9)",
-        border: "1px solid rgba(216, 170, 79, 0.28)",
-        borderRadius: "2px",
-        textAlign: "center",
-        color: "var(--gold-soft)",
-        fontWeight: 700,
-        fontSize: "0.9rem",
-      }}
-    >
+    <div className="current-gold">
       Current Gold: {goldAmount.toLocaleString()}
     </div>
   );
