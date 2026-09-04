@@ -85,7 +85,7 @@ CREATE TABLE "Purchase" (
     "characterId" TEXT NOT NULL,
     "itemId" TEXT,
     "itemName" TEXT NOT NULL,
-    "priceCp" INTEGER NOT NULL,
+    "priceGp" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 1,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" "PurchaseStatus" NOT NULL DEFAULT 'PENDING',

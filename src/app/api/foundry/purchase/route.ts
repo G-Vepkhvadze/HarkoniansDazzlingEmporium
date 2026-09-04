@@ -151,7 +151,7 @@ export async function POST(request: Request) {
         // Refund the character
         await tx.character.update({
           where: { id: purchase.characterId },
-          data: { creditBalance: { increment: purchase.priceCp } }
+          data: { creditBalance: { increment: purchase.priceGp } }
         });
 
         // Restore stock if item exists and stock is finite
@@ -249,7 +249,7 @@ export async function POST(request: Request) {
         foundryItemId: foundryItemId || null,
         itemId: purchase.itemId,
         itemName: purchase.itemName,
-        priceCp: purchase.priceCp
+        priceGp: purchase.priceGp
       });
       await createAuditLog(
         world.dmUserId,

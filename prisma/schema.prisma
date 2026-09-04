@@ -147,7 +147,7 @@ model Purchase {
   itemName String
 
   // Total purchase price in copper pieces.
-  priceCp Int
+  priceGp Int
 
   // Number of copies purchased.
   quantity Int @default(1)
@@ -317,7 +317,7 @@ model AuditLog {
 }
 
 model VaultItem {
-  id        String @id @default(uuid())
+  id        String   @id @default(uuid())
   image     String
   quote     String
   createdAt DateTime @default(now())
@@ -329,12 +329,12 @@ model VaultItem {
 }
 
 model VaultLike {
-  id            String @id @default(uuid())
-  vaultItemId   String
-  vaultItem    VaultItem @relation(fields: [vaultItemId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+  id          String    @id @default(uuid())
+  vaultItemId String
+  vaultItem   VaultItem @relation(fields: [vaultItemId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
 
   @@unique([vaultItemId, userId])
   @@index([vaultItemId])

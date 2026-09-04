@@ -36,7 +36,7 @@ import {
  *   "rarity": "...", (optional)
  *   "type": "...",
  *   "image": "...", (optional)
- *   "priceCp": 500, (optional, default 0)
+ *   "priceGp": 500, (optional, default 0)
  *   "stock": 10, (optional, default 0)
  *   "deal": false, (optional, default false)
  *   "discountPercent": 0, (optional, default 0)

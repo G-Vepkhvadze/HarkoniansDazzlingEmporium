@@ -38,7 +38,7 @@ export interface PublishFoundryItemRequest {
   image?: string;
 
   // Pricing and stock
-  priceCp?: number;
+  priceGp?: number;
   stock?: number;
   deal?: boolean;
   discountPercent?: number;
@@ -170,9 +170,16 @@ export function validatePublishRequest(
     }
   }
 
-  if ('priceCp' in body && body.priceCp !== undefined && body.priceCp !== null) {
-    if (typeof body.priceCp !== 'number' || !Number.isFinite(body.priceCp) || body.priceCp < 0) {
-      return { valid: false, error: 'priceCp must be a non-negative number if provided' };
+  if ('priceGp' in body && body.priceGp !== undefined && body.priceGp !== null) {
+    if (
+        typeof body.priceGp !== 'number' ||
+        !Number.isFinite(body.priceGp) ||
+        body.priceGp < 0
+    ) {
+      return {
+        valid: false,
+        error: 'priceGp must be a non-negative number if provided'
+      };
     }
   }
 
@@ -213,7 +220,7 @@ export function validatePublishRequest(
       rarity: body.rarity ? (body.rarity as string).trim() : undefined,
       type: (body.type as string).trim(),
       image: body.image ? (body.image as string).trim() : undefined,
-      priceCp: body.priceCp as number | undefined,
+      priceGp: body.priceGp as number | undefined,
       stock: body.stock as number | undefined,
       deal: body.deal as boolean | undefined,
       discountPercent: body.discountPercent as number | undefined,
@@ -341,7 +348,7 @@ export async function publishFoundryItem(
     rarity: mapRarity(request.rarity),
     type: mapType(request.type),
     image: request.image || '',
-    price: request.priceCp || 0,
+    price: request.priceGp || 0,
     deal: request.deal || false,
     discountPercent: request.discountPercent || 0,
     stock: request.stock || 0,
@@ -438,7 +445,7 @@ export async function updateFoundryItem(
     rarity: mapRarity(request.rarity),
     type: mapType(request.type),
     image: request.image || '',
-    price: request.priceCp || 0,
+    price: request.priceGp || 0,
     deal: request.deal || false,
     discountPercent: request.discountPercent || 0,
     stock: request.stock || 0,

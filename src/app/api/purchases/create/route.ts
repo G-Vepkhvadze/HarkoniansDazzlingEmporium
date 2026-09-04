@@ -155,7 +155,7 @@ export async function POST(request: Request) {
     }
     
     // Calculate total price in copper
-    const totalPriceCp = item.price * quantity;
+    const totalPriceGp = item.price * quantity;
     
     // Validate stock
     const currentStock = item.stock;
@@ -170,7 +170,7 @@ export async function POST(request: Request) {
     }
     
     // Validate balance
-    if (character.creditBalance < totalPriceCp) {
+    if (character.creditBalance < totalPriceGp) {
       return NextResponse.json(
         { error: "Insufficient funds" },
         { status: 400 }
@@ -197,7 +197,7 @@ export async function POST(request: Request) {
         select: { creditBalance: true }
       });
       
-      if (!currentCharacter || currentCharacter.creditBalance < totalPriceCp) {
+      if (!currentCharacter || currentCharacter.creditBalance < totalPriceGp) {
         throw new Error("Insufficient funds");
       }
       
@@ -208,7 +208,7 @@ export async function POST(request: Request) {
           characterId,
           itemId,
           itemName: item.name,
-          priceCp: totalPriceCp,
+          priceGp: totalPriceGp,
           quantity,
           status: "PENDING"
         }
@@ -217,7 +217,7 @@ export async function POST(request: Request) {
       // Deduct balance
       await tx.character.update({
         where: { id: characterId },
-        data: { creditBalance: { decrement: totalPriceCp } }
+        data: { creditBalance: { decrement: totalPriceGp } }
       });
       
       // Decrement stock (if not unlimited)
