@@ -1,14 +1,11 @@
 import "./globals.css";
 import { Cinzel_Decorative, Uncial_Antiqua } from "next/font/google";
-import { getCurrentUserClient } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth/index";
 import { AuthProvider } from "@/components/AuthProvider/AuthProvider";
 import Navigation from "@/components/Navigation/Navigation";
 import Link from "next/link";
 import AdminLink from "@/components/AdminLink/AdminLink";
 import CurrentGold from "@/components/CurrentGold/CurrentGold";
-
-// Disable static generation to prevent build timeouts from auth fetches
-export const dynamic = 'force-dynamic';
 
 const cinzel = Cinzel_Decorative({
   subsets: ["latin"],
@@ -32,7 +29,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const currentUser = await getCurrentUserClient();
+  const currentUser = await getCurrentUser();
   
   const initialAuthState = {
     isAuthenticated: !!currentUser,
