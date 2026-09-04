@@ -1,3 +1,5 @@
+import LocomotiveScrollProvider from "@/components/locomotiveScroll/LocomotiveScroll";
+
 const branches = [
   {
     city: "Balordroch",
@@ -24,6 +26,7 @@ const branches = [
 export default function FindMePage() {
   return (
     <div className="stacked-page">
+      <LocomotiveScrollProvider />
       <section className="page-intro">
         <p className="eyebrow">Find Me</p>
         <h1>Branches across the better-mapped parts of the realm.</h1>

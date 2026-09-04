@@ -1,5 +1,6 @@
 import MarketplaceBrowser from "@/components/MarketplaceFilters/MarketplaceBrowser";
 import { getItems } from "@/lib/items";
+import LocomotiveScrollProvider from "@/components/locomotiveScroll/LocomotiveScroll";
 
 export const revalidate = 60;
 
@@ -8,6 +9,7 @@ export default async function MarketplacePage() {
 
   return (
     <div className="stacked-page">
+        <LocomotiveScrollProvider />
       <section className="page-intro">
         <p className="eyebrow">Marketplace</p>
         <h1>Browse the shelves before something bites.</h1>

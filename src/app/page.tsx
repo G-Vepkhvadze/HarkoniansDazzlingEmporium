@@ -1,5 +1,6 @@
 import { getFeaturedItems } from "@/lib/items";
 import ItemCard from "@/components/ItemCard/ItemCard";
+import LocomotiveScrollProvider from "@/components/locomotiveScroll/LocomotiveScroll";
 
 export const revalidate = 60;
 
@@ -9,6 +10,7 @@ export default async function HomePage() {
 
   return (
       <div className="stacked-page">
+        <LocomotiveScrollProvider />
         <section className="hero-section">
           <p className="eyebrow">Arcane goods, suspiciously fair prices</p>
           <h1>

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getImageUrl } from "@/lib/imageUrl";
 import { isLoggedIn, login, logout } from "@/lib/auth";
+import LocomotiveScrollProvider from "@/components/locomotiveScroll/LocomotiveScroll";
 
 interface ItemRow {
   id: string;
@@ -239,6 +240,7 @@ export default function SecretAdminPage() {
 
   return (
     <div className="admin-page">
+      <LocomotiveScrollProvider />
       <div className="admin-toolbar">
         <div>
           <h1>Admin — Item Manager</h1>

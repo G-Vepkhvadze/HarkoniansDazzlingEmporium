@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { login, isLoggedIn } from "@/lib/auth";
 import Link from "next/link";
+import LocomotiveScrollProvider from "@/components/locomotiveScroll/LocomotiveScroll";
 
 function AuthPageContent() {
   const [username, setUsername] = useState("");
@@ -43,6 +44,7 @@ function AuthPageContent() {
 
   return (
     <div style={{ padding: '2rem' }}>
+      <LocomotiveScrollProvider />
       <h1>Login</h1>
       <form onSubmit={submit} style={{ display: 'grid', gap: '1rem', maxWidth: '420px', margin: '2rem auto' }}>
         <label>

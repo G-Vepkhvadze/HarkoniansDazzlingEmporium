@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { isLoggedIn, getCurrentUserClient, logout } from "@/lib/auth";
 import Link from "next/link";
+import LocomotiveScrollProvider from "@/components/locomotiveScroll/LocomotiveScroll";
 
 function UserPageContent() {
   const [user, setUser] = useState<{ id: string; username: string; role: string } | null>(null);
@@ -66,6 +67,7 @@ function UserPageContent() {
 
   return (
     <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
+        <LocomotiveScrollProvider />
       <h1 style={{ marginBottom: "1.5rem", fontSize: "1.8rem" }}>User Profile</h1>
 
       <section style={{ 

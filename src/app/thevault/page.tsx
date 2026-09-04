@@ -2,6 +2,7 @@ import VaultCard from "@/components/VaultCard/VaultCard";
 import AddVaultItem from "@/components/AddVaultItem/AddVaultItem";
 import { getVaultItems } from "@/lib/vault";
 import { getCurrentUserClient } from "@/lib/auth";
+import LocomotiveScrollProvider from "@/components/locomotiveScroll/LocomotiveScroll";
 
 export const revalidate = 60;
 
@@ -11,6 +12,7 @@ export default async function TheVaultPage() {
 
   return (
     <div className="stacked-page vault-page">
+        <LocomotiveScrollProvider />
       <section className="page-intro vault-page__intro">
         <p className="eyebrow">The Vault</p>
         <h1>The Vault</h1>
