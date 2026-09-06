@@ -141,7 +141,7 @@ function UserPageContent() {
                 }}
               >
                 <span><strong>{character.name}</strong></span>
-                <span>Credit: {character.creditBalance} CP</span>
+                <span>Credit: {character.creditBalance} Gold</span>
               </li>
             ))}
           </ul>
