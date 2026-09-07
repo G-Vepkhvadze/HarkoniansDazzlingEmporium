@@ -43,7 +43,7 @@ export function sanitizeFoundryDescription(
     // [Fire Damage] → <strong>Fire Damage</strong>
     text = text.replace(
         /\[([^\[\]]+)\]/g,
-        "'$1'"
+        "$1"
     );
 
     const $ = load(text);
