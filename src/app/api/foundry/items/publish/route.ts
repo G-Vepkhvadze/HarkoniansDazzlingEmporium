@@ -4,7 +4,7 @@ import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
 import {
   validatePublishRequest,
   publishFoundryItem,
-  MAX_FOUNDRY_ITEM_DATA_SIZE,
+  MAX_FOUNDRY_ITEM_DATA_SIZE, getHarkoniansMetadata,
 } from "@/lib/foundry/items";
 
 /**
@@ -63,6 +63,47 @@ function addCorsHeaders(response: NextResponse, request: Request): void {
   response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
   response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-foundry-world-secret");
 }
+
+function stripHarkoniansMetadata(
+  data: unknown
+): Record<string, unknown> | null {
+  if (
+    !data ||
+    typeof data !== "object" ||
+    Array.isArray(data)
+  ) {
+    return null;
+  }
+
+  const clone = JSON.parse(
+    JSON.stringify(data)
+  ) as Record<string, unknown>;
+
+  delete clone._harkoniansMetadata;
+
+  return clone;
+}
+
+function sameFoundryItemData(
+  existingData: unknown,
+  incomingData: unknown
+): boolean {
+  const existing =
+    stripHarkoniansMetadata(existingData);
+
+  const incoming =
+    stripHarkoniansMetadata(incomingData);
+
+  if (!existing || !incoming) {
+    return false;
+  }
+
+  return (
+    JSON.stringify(existing) ===
+    JSON.stringify(incoming)
+  );
+}
+
 
 // Handle OPTIONS for CORS preflight
 export async function OPTIONS(request: Request) {
@@ -234,28 +275,170 @@ export async function POST(request: Request) {
     // Check if an item with the same Foundry item UUID already exists
     // This provides idempotency for retrying the same publish operation
     const { prisma } = await import('@/lib/prisma');
-    const existingItem = await prisma.item.findFirst({
-      where: {
-        foundryItemData: {
-          path: ["_harkoniansMetadata", "foundryItemUuid"],
-          equals: payload.foundryItemUuid,
-        },
-      },
-    });
+    const existingItem =
+        await prisma.item.findFirst({
+          where: {
+            foundryItemData: {
+              path: [
+                "_harkoniansMetadata",
+                "foundryItemUuid"
+              ],
+              equals: payload.foundryItemUuid
+            }
+          }
+        });
 
     if (existingItem) {
-      // Item already exists - return the existing item ID for idempotency
-      const response = NextResponse.json(
-        {
-          success: true,
-          item: {
-            id: existingItem.id,
-          },
-          message: "Item already published. Returning existing Store Item ID for idempotency.",
-        },
-        { status: 200 }
+      const metadata =
+          getHarkoniansMetadata(
+              existingItem.foundryItemData
+          );
+
+      const sameWorld =
+          metadata?.foundryWorldId ===
+          payload.foundryWorldId;
+
+      const sameFoundryItemId =
+          metadata?.foundryItemId ===
+          payload.foundryItemId;
+
+      const sameName =
+          existingItem.name ===
+          payload.name;
+
+      const sameJson =
+          sameFoundryItemData(
+              existingItem.foundryItemData,
+              payload.foundryItemData
+          );
+
+      if (
+          !sameWorld ||
+          !sameFoundryItemId ||
+          !sameName ||
+          !sameJson
+      ) {
+        const response =
+            NextResponse.json(
+                {
+                  error:
+                      "A different Harkonians item already exists for this Foundry Item."
+                },
+                { status: 409 }
+            );
+
+        addCorsHeaders(
+            response,
+            request
+        );
+
+        return response;
+      }
+
+      /*
+       * The exact same Foundry item already exists.
+       * Add the newly submitted stock to the existing stock.
+       *
+       * -1 means unlimited and remains unlimited.
+       */
+      const additionalStock =
+          payload.stock ?? 0;
+
+      if (
+          !Number.isInteger(additionalStock) ||
+          additionalStock < 0
+      ) {
+        const response =
+            NextResponse.json(
+                {
+                  error:
+                      "Stock must be a non-negative integer."
+                },
+                { status: 400 }
+            );
+
+        addCorsHeaders(
+            response,
+            request
+        );
+
+        return response;
+      }
+
+      const newStock =
+          existingItem.stock === -1
+              ? -1
+              : existingItem.stock +
+              additionalStock;
+
+      const updatedItem =
+          await prisma.item.update({
+            where: {
+              id: existingItem.id
+            },
+            data: {
+              stock: newStock
+            },
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              rarity: true,
+              price: true,
+              stock: true
+            }
+          });
+
+      const auditContext =
+          createAuditContextFromRequest(
+              request,
+              {
+                foundryWorldId:
+                payload.foundryWorldId,
+                foundryItemId:
+                payload.foundryItemId,
+                foundryItemUuid:
+                payload.foundryItemUuid,
+                storeItemId:
+                updatedItem.id,
+                addedStock:
+                additionalStock,
+                newStock:
+                updatedItem.stock,
+                republished: true
+              }
+          );
+
+      await createAuditLog(
+          world.dmUserId,
+          "FOUNDRY_ITEM_REPUBLISHED",
+          "Item",
+          updatedItem.id,
+          auditContext
       );
-      addCorsHeaders(response, request);
+
+      const response =
+          NextResponse.json(
+              {
+                success: true,
+                item: {
+                  id: updatedItem.id,
+                  name: updatedItem.name,
+                  type: updatedItem.type,
+                  rarity: updatedItem.rarity,
+                  price: updatedItem.price,
+                  stock: updatedItem.stock
+                },
+                addedToExistingStock: true
+              },
+              { status: 200 }
+          );
+
+      addCorsHeaders(
+          response,
+          request
+      );
+
       return response;
     }
 

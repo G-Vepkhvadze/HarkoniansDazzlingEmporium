@@ -308,19 +308,154 @@ export function mapType(type: string): ItemType {
 // CORE PUBLISHING LOGIC
 // =============================================
 
-/**
- * Publish a Foundry item to the Harkonians store.
- * 
- * This creates a new Item record with:
- * - Store metadata (name, description, rarity, type, image, price, stock)
- * - Complete Foundry item data in foundryItemData field
- * - Source metadata for tracking
- * 
- * @param request - The validated publish request
- * @param worldId - The KatastroWorld ID (from world secret validation)
- * @param dmUserId - The DM user ID (from world secret validation)
- * @returns Promise resolving to the created item
- */
+function cloneWithoutHarkoniansMetadata(
+  data: unknown
+): Record<string, unknown> | null {
+  if (
+    !data ||
+    typeof data !== "object" ||
+    Array.isArray(data)
+  ) {
+    return null;
+  }
+
+  const clone = JSON.parse(
+    JSON.stringify(data)
+  ) as Record<string, unknown>;
+
+  delete clone._harkoniansMetadata;
+
+  return clone;
+}
+
+function foundryItemDataMatches(
+  existingData: unknown,
+  incomingData: unknown
+): boolean {
+  const existing =
+    cloneWithoutHarkoniansMetadata(existingData);
+
+  const incoming =
+    cloneWithoutHarkoniansMetadata(incomingData);
+
+  if (!existing || !incoming) {
+    return false;
+  }
+
+  return (
+    JSON.stringify(existing) ===
+    JSON.stringify(incoming)
+  );
+}
+
+export async function addStockToExistingFoundryItem(
+  existingItemId: string,
+  additionalStock: number | null | undefined
+): Promise<PublishFoundryItemResult> {
+  const amount =
+    additionalStock == null
+      ? 0
+      : additionalStock;
+
+  if (
+    !Number.isInteger(amount) ||
+    amount < 0
+  ) {
+    throw new Error(
+      "Stock must be a non-negative integer."
+    );
+  }
+
+  const item =
+    await prisma.item.findUnique({
+      where: {
+        id: existingItemId
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        rarity: true,
+        price: true,
+        stock: true,
+        foundryItemData: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+  if (!item) {
+    throw new Error(
+      `Item with ID ${existingItemId} not found`
+    );
+  }
+
+  const updatedStock =
+    item.stock === -1
+      ? -1
+      : item.stock + amount;
+
+  const updatedItem =
+    await prisma.item.update({
+      where: {
+        id: existingItemId
+      },
+      data: {
+        stock: updatedStock
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        rarity: true,
+        price: true,
+        stock: true,
+        foundryItemData: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+  const metadata =
+    getHarkoniansMetadata(
+      updatedItem.foundryItemData
+    );
+
+  return {
+    success: true,
+    item: {
+      id: updatedItem.id,
+      name: updatedItem.name,
+      type: updatedItem.type,
+      rarity: updatedItem.rarity,
+      price: updatedItem.price,
+      stock: updatedItem.stock,
+      foundryWorldId:
+        typeof metadata?.foundryWorldId === "string"
+          ? metadata.foundryWorldId
+          : "",
+      foundryItemId:
+        typeof metadata?.foundryItemId === "string"
+          ? metadata.foundryItemId
+          : "",
+      foundryItemUuid:
+        typeof metadata?.foundryItemUuid === "string"
+          ? metadata.foundryItemUuid
+          : "",
+      foundrySystemId:
+        typeof metadata?.foundrySystemId === "string"
+          ? metadata.foundrySystemId
+          : "",
+      foundrySystemVersion:
+        typeof metadata?.foundrySystemVersion === "string"
+          ? metadata.foundrySystemVersion
+          : undefined
+    }
+  };
+}
+
+
+
 export async function publishFoundryItem(
   request: PublishFoundryItemRequest,
   worldId: string,
@@ -356,7 +491,10 @@ export async function publishFoundryItem(
     price: request.priceGp || 0,
     deal: request.deal || false,
     discountPercent: request.discountPercent || 0,
-    stock: request.stock || 0,
+    stock:
+        request.stock == null
+            ? -1
+            : request.stock,
     foundryItemData: enrichedData as InputJsonValue,
   };
 
@@ -456,7 +594,10 @@ export async function updateFoundryItem(
     price: request.priceGp || 0,
     deal: request.deal || false,
     discountPercent: request.discountPercent || 0,
-    stock: request.stock || 0,
+    stock:
+        request.stock == null
+            ? -1
+            : request.stock,
     foundryItemData: enrichedData as InputJsonValue,
   };
 
