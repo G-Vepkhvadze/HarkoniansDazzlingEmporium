@@ -31,22 +31,29 @@ export function sanitizeFoundryDescription(
 
     // Foundry tags
     text = text.replace(
-        /@spell\b/gi,
+        /@spell(?:\[[^\]]*\])?/gi,
         ""
     );
 
     text = text.replace(
-        /&Reference\b/gi,
+        /&Reference(?:\[[^\]]*\])?/gi,
         ""
     );
 
-    // [Fire Damage] → <strong>Fire Damage</strong>
+    // [Fire Damage] → Fire Damage
     text = text.replace(
         /\[([^\[\]]+)\]/g,
         "$1"
     );
 
     const $ = load(text);
+
+    // Remove existing <strong> tags while preserving their text
+    $("strong").each((_, element) => {
+        $(element).replaceWith(
+            $(element).text()
+        );
+    });
 
     // Preserve line breaks
     $("br").replaceWith("\n");
@@ -62,7 +69,7 @@ export function sanitizeFoundryDescription(
         $(element).append("\n");
     });
 
-    // Return HTML, not plain text
+    // Return cleaned HTML
     return ($("body").html() ?? "")
         .replace(/[ \t]+/g, " ")
         .replace(/[ \t]*\n[ \t]*/g, "\n")
