@@ -160,6 +160,8 @@ h3 {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.45;
+  max-block-size: 220px;
+  overflow: hidden;
 }
 
 .hero-section p,
@@ -275,6 +277,7 @@ h3 {
   grid-template-rows: 2.4rem 1.2rem minmax(3.6rem, 1fr) auto;
   gap: 1rem;
   padding: 0.6rem;
+  overflow: hidden;
 }
 
 .item-card__meta {
@@ -299,10 +302,6 @@ h3 {
 .item-card__title-row h3,
 .item-card p {
   margin-bottom: 0;
-}
-
-.item-card__description {
-  overflow: hidden;
 }
 
 .item-card__meta {

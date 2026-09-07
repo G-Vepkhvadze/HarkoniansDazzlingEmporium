@@ -7,6 +7,7 @@
 
 import { prisma } from '../prisma';
 import { ItemRarity, ItemType, Prisma } from '@prisma/client';
+import {sanitizeFoundryDescription} from "@/lib/foundry/descriptions";
 
 // Type for Prisma JSON input
 type InputJsonValue = Prisma.InputJsonValue;
@@ -344,7 +345,9 @@ export async function publishFoundryItem(
   // Build the Item data
   const itemData = {
     name: request.name,
-    description: request.description || '',
+    description: sanitizeFoundryDescription(
+        request.description || ''
+    ),
     rarity: mapRarity(request.rarity),
     type: mapType(request.type),
     image: request.image || '',
@@ -361,6 +364,10 @@ export async function publishFoundryItem(
     select: {
       id: true,
       name: true,
+      description:
+          sanitizeFoundryDescription(
+              request.description
+          ),
       type: true,
       rarity: true,
       price: true,
@@ -441,7 +448,9 @@ export async function updateFoundryItem(
   // Build the Item data
   const itemData = {
     name: request.name,
-    description: request.description || '',
+    description: sanitizeFoundryDescription(
+        request.description || ''
+    ),
     rarity: mapRarity(request.rarity),
     type: mapType(request.type),
     image: request.image || '',
@@ -459,6 +468,10 @@ export async function updateFoundryItem(
     select: {
       id: true,
       name: true,
+      description:
+          sanitizeFoundryDescription(
+              request.description
+          ),
       type: true,
       rarity: true,
       price: true,
