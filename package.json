@@ -11,7 +11,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "sanitize:foundry-descriptions": "tsx scripts/sanitizer-descriptions.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
@@ -37,7 +38,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
-    "tsx": "^4.22.4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

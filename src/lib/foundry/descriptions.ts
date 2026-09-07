@@ -24,6 +24,16 @@ export function sanitizeFoundryDescription(
         ""
     );
 
+    text = text.replace(
+        /@spell\b/gi,
+        ""
+    );
+
+    text = text.replace(
+        /&Reference\b/gi,
+        ""
+    );
+
     const $ = load(text);
 
     $("br").replaceWith("\n");
