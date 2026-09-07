@@ -9,27 +9,21 @@ export function sanitizeFoundryDescription(
 
     let text = input;
 
-    // Foundry inline rolls:
-    // [[/r 2d4 + 2]] → 2d4 + 2
     text = text.replace(
         /\[\[\/r\s+([\s\S]*?)\]\]/gi,
         "$1"
     );
 
-    // Foundry UUID links with visible text:
-    // @UUID[...] {Shield} → Shield
     text = text.replace(
         /@UUID\[[^\]]+\]\{([^}]+)\}/gi,
         "$1"
     );
 
-    // Foundry UUID links without visible text
     text = text.replace(
         /@UUID\[[^\]]+\]/gi,
         ""
     );
 
-    // Foundry tags
     text = text.replace(
         /@spell(?:\[[^\]]*\])?/gi,
         ""
@@ -40,7 +34,16 @@ export function sanitizeFoundryDescription(
         ""
     );
 
-    // [Fire Damage] → Fire Damage
+    text = text.replace(
+        /condition=(?:\[[^\]]*\])?/gi,
+        ""
+    );
+
+    text = text.replace(
+        /type=(?:\[[^\]]*\])?/gi,
+        ""
+    );
+
     text = text.replace(
         /\[([^\[\]]+)\]/g,
         "$1"

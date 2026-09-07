@@ -215,10 +215,15 @@ export async function POST(request: Request) {
       return response;
     }
 
-    // Update character gold
+    const oldBalance =
+        character.creditBalance;
+
     character = await prisma.character.update({
       where: { id: character.id },
-      data: { creditBalance: Math.max(0, gold) },
+      data: {
+        creditBalance:
+            Math.max(0, gold)
+      },
       select: {
         id: true,
         name: true,
@@ -232,13 +237,17 @@ export async function POST(request: Request) {
       }
     });
 
-    // Log the sync
-    const context = createAuditContextFromRequest(request, {
-      foundryWorldId,
-      foundryActorId,
-      oldBalance: character.creditBalance - (gold - (character.creditBalance - gold)),
-      newBalance: character.creditBalance
-    });
+    const context =
+        createAuditContextFromRequest(
+            request,
+            {
+              foundryWorldId,
+              foundryActorId,
+              oldBalance,
+              newBalance:
+              character.creditBalance
+            }
+        );
     await createAuditLog(
       world.dmUserId,
       "CREDIT_ADJUSTMENT",

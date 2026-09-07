@@ -146,7 +146,7 @@ model Purchase {
 
   itemName String
 
-  // Total purchase price in copper pieces.
+  // Total purchase price in gold pieces.
   priceGp Int
 
   // Number of copies purchased.
