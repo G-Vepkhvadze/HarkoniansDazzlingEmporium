@@ -17,7 +17,9 @@ export const prisma: PrismaClient =
         : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") {
+// Always set global in development for hot reload support.
+// In production (Vercel), the module-level singleton ensures one instance per container.
+if (process.env.NODE_ENV === "development") {
   globalForPrisma.prisma = prisma;
 }
 

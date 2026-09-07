@@ -1,5 +1,7 @@
-import {sanitizeFoundryDescription} from "@/lib/foundry/descriptions";
-import prisma from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
+import { sanitizeFoundryDescription } from "@/lib/foundry/descriptions";
+
+const prisma = new PrismaClient();
 
 async function main() {
     const items = await prisma.item.findMany({
