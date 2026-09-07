@@ -3,7 +3,9 @@ export type ItemRarity =
     | "UNCOMMON"
     | "RARE"
     | "VERY_RARE"
-    | "LEGENDARY";
+    | "LEGENDARY"
+    | "ARTIFACT"
+    | "UNIQUE";
 
 export type ItemType =
     | "WEAPON"
