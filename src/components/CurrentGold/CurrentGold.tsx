@@ -1,27 +1,68 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider/AuthProvider";
 
-/**
- * CurrentGold component - displays the character's current gold amount.
- * Shows 0 as default since there are no actual Foundry characters connected.
- */
+interface Character {
+  id: string;
+  name: string;
+  creditBalance: number;
+  foundryWorldId: string | null;
+  foundryActorId: string | null;
+}
+
 export default function CurrentGold() {
   const { isAuthenticated, loading } = useAuth();
-  const goldAmount = 0; // For now, always 0 as there are no actual Foundry characters connected
+  const [goldAmount, setGoldAmount] = useState<number | null>(null);
 
-  if (loading) {
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setGoldAmount(null);
+      return;
+    }
 
-  // Only show for authenticated users
-  if (!isAuthenticated) {
+    async function fetchGold() {
+      try {
+        const response = await fetch("/api/characters", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        const linkedCharacters: Character[] =
+          (data.characters || []).filter(
+            (character: Character) =>
+              character.foundryWorldId &&
+              character.foundryActorId
+          );
+
+        if (linkedCharacters.length > 0) {
+          setGoldAmount(
+            linkedCharacters[0].creditBalance
+          );
+        } else {
+          setGoldAmount(0);
+        }
+      } catch {
+        // Keep the previous value if the request fails.
+      }
+    }
+
+    fetchGold();
+  }, [isAuthenticated]);
+
+  if (loading || !isAuthenticated) {
     return null;
   }
 
   return (
     <div className="current-gold">
-      Current Gold: {goldAmount.toLocaleString()}
+      Current Gold:{" "}
+      {(goldAmount ?? 0).toLocaleString()}
     </div>
   );
 }
