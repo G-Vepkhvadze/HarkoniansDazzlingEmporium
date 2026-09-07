@@ -155,12 +155,26 @@ export async function POST(request: Request) {
     }
     
     // Calculate total price in copper
-    const totalPriceGp = item.price * quantity;
+    const discount =
+        item.deal && item.discountPercent > 0
+            ? item.discountPercent
+            : 0;
+
+    const unitPriceGp =
+        discount > 0
+            ? Math.round(
+                item.price * (1 - discount / 100)
+            )
+            : item.price;
+
+    const totalPriceGp =
+        unitPriceGp * quantity;
     
     // Validate stock
     const currentStock = item.stock;
     const isUnlimited = currentStock === -1;
-    const hasSufficientStock = isUnlimited || currentStock >= quantity;
+    const hasSufficientStock =
+        isUnlimited || currentStock >= quantity;
     
     if (!hasSufficientStock) {
       return NextResponse.json(

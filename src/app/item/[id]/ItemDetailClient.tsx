@@ -69,12 +69,25 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   const [success, setSuccess] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
+  const [characters, setCharacters] = useState<
+      {
+        id: string;
+        name: string;
+        creditBalance: number;
+        foundryWorldId: string | null;
+        foundryActorId: string | null;
+      }[]
+  >([]);
+
+  const [selectedCharacterId, setSelectedCharacterId] =
+      useState("");
+
+  const [purchasing, setPurchasing] = useState(false);
 
   const filter = new Filter({
     placeHolder: "***",
   });
-  
-  // - case insensitive
+
   const exceptions = [
     "fuck", "shit", "cunt", "twat", "bitch", "ass", 
     "asshole", "dickhead", "shithead", "cunthead", "twathead",
@@ -93,6 +106,38 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   useEffect(() => {
     // Check initial login state
     isLoggedIn().then(setLoggedIn);
+
+    fetch("/api/characters", {
+      credentials: "include"
+    })
+        .then(async (response) => {
+          if (!response.ok) {
+            return;
+          }
+
+          const data = await response.json();
+
+          const linkedCharacters =
+              (data.characters || []).filter(
+                  (character: {
+                    foundryWorldId: string | null;
+                    foundryActorId: string | null;
+                  }) =>
+                      character.foundryWorldId &&
+                      character.foundryActorId
+              );
+
+          setCharacters(linkedCharacters);
+
+          if (linkedCharacters.length === 1) {
+            setSelectedCharacterId(
+                linkedCharacters[0].id
+            );
+          }
+        })
+        .catch(() => {
+          // Leave character list empty.
+        });
     
     const handleStorageChange = () => {
       isLoggedIn().then(setLoggedIn);
@@ -106,11 +151,6 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   const discount = item.deal && item.discountPercent ? item.discountPercent : 0;
   const displayPrice = discount > 0 ? calculateSalePrice(item.price, discount) : item.price;
   const originalPrice = item.price;
-
-  // Load reviews on mount
-  useEffect(() => {
-    setReviews(item.reviews);
-  }, [item.reviews]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,6 +191,74 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
       setError("Failed to submit review.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePurchase = async () => {
+    if (!loggedIn) {
+      setError("You must be logged in to purchase.");
+      return;
+    }
+
+    if (!selectedCharacterId) {
+      setError("Please select a character.");
+      return;
+    }
+
+    if (
+        item.stock !== -1 &&
+        purchaseQuantity > item.stock
+    ) {
+      setError("Not enough stock available.");
+      return;
+    }
+
+    setPurchasing(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const idempotencyKey =
+          crypto.randomUUID();
+
+      const response = await fetch(
+          "/api/purchases/create",
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              itemId: item.id,
+              characterId: selectedCharacterId,
+              quantity: purchaseQuantity,
+              idempotencyKey
+            })
+          }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+            data.error || "Purchase failed."
+        );
+        return;
+      }
+
+      setSuccess(
+          "Purchase submitted successfully. Your item will be delivered to Foundry."
+      );
+
+      setPurchaseQuantity(1);
+
+    } catch {
+      setError(
+          "Unable to complete purchase. Please try again."
+      );
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -252,6 +360,34 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
             alignItems: "center",
             maxWidth: "500px",
           }}>
+            {loggedIn && characters.length > 0 && (
+                <div>
+                  <label>
+                    Purchase for:
+                  </label>
+
+                  <select
+                      value={selectedCharacterId}
+                      onChange={(e) =>
+                          setSelectedCharacterId(e.target.value)
+                      }
+                  >
+                    <option value="">
+                      Select a character
+                    </option>
+
+                    {characters.map((character) => (
+                        <option
+                            key={character.id}
+                            value={character.id}
+                        >
+                          {character.name} —{" "}
+                          {formatGold(character.creditBalance)}
+                        </option>
+                    ))}
+                  </select>
+                </div>
+            )}
             <label style={{
               color: "var(--cream)",
               fontWeight: 700,
@@ -259,22 +395,32 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
               Quantity:
             </label>
             <input
-              type="number"
-              min="1"
-              max={item.stock}
-              value={purchaseQuantity}
-              onChange={(e) => {
-                const value = parseInt(e.target.value) || 1;
-                setPurchaseQuantity(Math.min(value, item.stock));
-              }}
-              style={{
-                border: "1px solid rgba(216, 170, 79, 0.35)",
-                borderRadius: "2px",
-                background: "#130d09",
-                color: "var(--cream)",
-                padding: "0.5rem",
-                width: "80px",
-              }}
+                type="number"
+                min="1"
+                max={item.stock === -1 ? undefined : item.stock}
+                value={purchaseQuantity}
+                onChange={(e) => {
+                  const value = Math.max(
+                      1,
+                      parseInt(e.target.value, 10) || 1
+                  );
+
+                  if (item.stock === -1) {
+                    setPurchaseQuantity(value);
+                  } else {
+                    setPurchaseQuantity(
+                        Math.min(value, item.stock)
+                    );
+                  }
+                }}
+                style={{
+                  border: "1px solid rgba(216, 170, 79, 0.35)",
+                  borderRadius: "2px",
+                  background: "#130d09",
+                  color: "var(--cream)",
+                  padding: "0.5rem",
+                  width: "80px",
+                }}
             />
           </div>
           <div style={{
@@ -304,9 +450,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
                 cursor: "pointer",
                 transition: "background 140ms ease, border-color 140ms ease",
               }}
-              onClick={() => {
-                alert("Purchase functionality coming soon!");
-              }}
+              onClick={() => {handlePurchase}}
             >
               Purchase
             </button>

@@ -10,6 +10,8 @@ const rarityLabels: Record<ShopItem["rarity"], string> = {
     RARE: "Rare",
     VERY_RARE: "Very Rare",
     LEGENDARY: "Legendary",
+    ARTIFACT: "Artifact",
+    UNIQUE: "Unique",
 };
 
 const imageSrc = (item: ShopItem) => getImageUrl(item.image);
