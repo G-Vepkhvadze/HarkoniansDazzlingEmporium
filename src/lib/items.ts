@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { getSupabase, ITEMS_BUCKET } from "./supabase";
 import { ItemRarity, ItemType } from "@prisma/client";
+import { sanitizeFoundryDescription } from "./foundry/descriptions";
 
 const itemSelect = {
     id: true,
@@ -63,7 +64,14 @@ export async function createItem(data: {
     discountPercent?: number;
     stock: number;
 }) {
-    return prisma.item.create({ data });
+    // Sanitize Foundry description markup on creation
+    const sanitizedDescription = sanitizeFoundryDescription(data.description);
+    return prisma.item.create({ 
+      data: { 
+        ...data, 
+        description: sanitizedDescription 
+      } 
+    });
 }
 
 export async function updateItem(id: string, data: Partial<{
@@ -87,9 +95,14 @@ export async function updateItem(id: string, data: Partial<{
         }
     }
 
+    // Sanitize Foundry description markup on update if description is provided
+    const sanitizedData = data.description !== undefined 
+        ? { ...data, description: sanitizeFoundryDescription(data.description) }
+        : data;
+
     return prisma.item.update({
         where: { id },
-        data,
+        data: sanitizedData,
     });
 }
 

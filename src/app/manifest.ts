@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "A fantasy marketplace.",
     start_url: "/",
     display: "standalone",
-    background_color: "#1f1712",
+    background_color: "#120d0a",
     theme_color: "#2d1e14",
     icons: [
       {
