@@ -1,60 +1,99 @@
 import { prisma } from "@/lib/prisma";
 import { sanitizeFoundryDescription } from "@/lib/foundry/descriptions";
 
-/**
- * Batch sanitize all item descriptions.
- * This script should be run once to clean up existing data.
- * New items are automatically sanitized during creation/update in lib/items.ts
- */
+const BATCH_SIZE = 100;
+
 async function main() {
-    console.log("Starting description sanitization...");
+    console.log(
+        "Starting description sanitization..."
+    );
 
-    const items = await prisma.item.findMany({
-        select: {
-            id: true,
-            name: true,
-            description: true,
-        },
-        // Process in batches to avoid memory issues with large datasets
-        take: 100,
-    });
-
-    console.log(`Found ${items.length} items to process.`);
-
+    let processed = 0;
     let updated = 0;
+    let cursor: string | undefined;
 
-    for (const item of items) {
-        const cleaned = sanitizeFoundryDescription(
-            item.description
-        );
+    while (true) {
+        const items =
+            await prisma.item.findMany({
+                take: BATCH_SIZE,
 
-        if (cleaned === item.description) {
-            continue;
+                ...(cursor
+                    ? {
+                        skip: 1,
+                        cursor: {
+                            id: cursor
+                        }
+                    }
+                    : {}),
+
+                orderBy: {
+                    id: "asc"
+                },
+
+                select: {
+                    id: true,
+                    name: true,
+                    description: true
+                }
+            });
+
+        if (items.length === 0) {
+            break;
         }
 
-        await prisma.item.update({
-            where: {
-                id: item.id,
-            },
-            data: {
-                description: cleaned,
-            },
-        });
+        for (const item of items) {
+            processed++;
 
-        updated++;
+            const cleaned =
+                sanitizeFoundryDescription(
+                    item.description
+                );
+
+            if (
+                cleaned === item.description
+            ) {
+                continue;
+            }
+
+            await prisma.item.update({
+                where: {
+                    id: item.id
+                },
+
+                data: {
+                    description: cleaned
+                }
+            });
+
+            updated++;
+
+            console.log(
+                `Updated: ${item.name}`
+            );
+        }
+
+        cursor =
+            items[items.length - 1].id;
 
         console.log(
-            `Updated: ${item.name}`
+            `Processed ${processed} items...`
         );
     }
 
     console.log(
-        `Finished. Updated ${updated} items.`
+        `Finished. Processed ${processed} items. Updated ${updated} items.`
     );
 }
 
 main()
-    .catch(error => {
-        console.error("Sanitization failed:", error);
+    .catch((error) => {
+        console.error(
+            "Sanitization failed:",
+            error
+        );
+
         process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
     });
