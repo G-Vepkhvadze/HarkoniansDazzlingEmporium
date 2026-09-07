@@ -364,10 +364,7 @@ export async function publishFoundryItem(
     select: {
       id: true,
       name: true,
-      description:
-          sanitizeFoundryDescription(
-              request.description
-          ),
+      description: true,
       type: true,
       rarity: true,
       price: true,
@@ -468,15 +465,13 @@ export async function updateFoundryItem(
     select: {
       id: true,
       name: true,
-      description:
-          sanitizeFoundryDescription(
-              request.description
-          ),
+      description: true,
       type: true,
       rarity: true,
       price: true,
       stock: true,
       foundryItemData: true,
+      createdAt: true,
       updatedAt: true,
     },
   });
