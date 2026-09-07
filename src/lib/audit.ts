@@ -4,14 +4,10 @@
  * Logs important actions for security review without exposing sensitive data.
  */
 
-import { PrismaClient } from "@prisma/client";
 import { prisma as prismaInstance } from "./prisma";
 
-// Re-export prisma for debugging if needed
-// export { prisma };
-
-// Use a local prisma instance that's guaranteed to be initialized
-const prisma: PrismaClient = prismaInstance;
+// Use the singleton prisma instance
+const prisma = prismaInstance;
 
 /**
  * Action types for audit logging.

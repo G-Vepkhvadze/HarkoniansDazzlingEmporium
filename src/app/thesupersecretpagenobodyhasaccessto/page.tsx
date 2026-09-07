@@ -287,7 +287,7 @@ export default function SecretAdminPage() {
                 <td className="image">
                   <label className="admin-image-uploader" title={`Upload image for ${item.name || "item"}`}>
                     {item.image ? (
-                      <img src={getImageUrl(item.image)} alt={item.name || ""} />
+                      <img src={getImageUrl(item.image)} alt={item.name || ""} loading="lazy" />
                     ) : (
                       <div className="admin-image-placeholder">?</div>
                     )}
@@ -431,7 +431,8 @@ export default function SecretAdminPage() {
                 <img
                   src={getImageUrl(newItem.image)}
                   alt="New item image preview"
-                  style={{ maxWidth: "120px", maxHeight: "120px", marginTop: "0.5rem", borderRadius: "8px" }}
+                  className="admin-image-preview"
+                  loading="lazy"
                 />
               ) : null}
             </label>

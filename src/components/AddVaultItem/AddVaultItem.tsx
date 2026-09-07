@@ -164,7 +164,7 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
                 <div className="vault-modal__field-content">
                   <label className="vault-image-upload" htmlFor="vault-image">
                     {imagePreview ? (
-                      <img src={imagePreview} alt="Preview" />
+                      <img src={imagePreview} alt="Preview" loading="lazy" />
                     ) : (
                       <span className="vault-image-placeholder">+</span>
                     )}

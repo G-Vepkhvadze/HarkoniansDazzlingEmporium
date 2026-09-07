@@ -36,7 +36,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Check authentication
-    const authUser = await requireAuth(request);
+    const authUser = await requireAuth();
 
     if (!authUser) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });

@@ -274,6 +274,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
               src={imageSrc}
               alt={item.name}
               className="item-detail-image"
+              loading="lazy"
             /></div>
           ) : (
             <div className="item-detail-image-placeholder">

@@ -1,7 +1,8 @@
 import { prisma } from "./prisma";
 import { getSupabase, ITEMS_BUCKET } from "./supabase";
-import { ItemRarity, ItemType } from "@prisma/client";
+import { ItemRarity as PrismaItemRarity, ItemType as PrismaItemType } from "@prisma/client";
 import { sanitizeFoundryDescription } from "./foundry/descriptions";
+import type { ItemRarity, ItemType, ShopItem } from "@/types/items";
 
 const itemSelect = {
     id: true,
@@ -34,15 +35,33 @@ async function removeStorageImage(image: string | null | undefined) {
     await supabase.storage.from(bucket).remove([objectPath]);
 }
 
+function mapPrismaRarityToLocal(rarity: PrismaItemRarity): ItemRarity {
+    return rarity as ItemRarity;
+}
+
+function mapPrismaTypeToLocal(type: PrismaItemType): ItemType {
+    return type as ItemType;
+}
+
+function mapPrismaItemToShopItem(item: any): ShopItem {
+    return {
+        ...item,
+        rarity: mapPrismaRarityToLocal(item.rarity),
+        type: mapPrismaTypeToLocal(item.type),
+        createdAt: item.createdAt || undefined,
+    };
+}
+
 export async function getItems() {
-    return prisma.item.findMany({
+    const items = await prisma.item.findMany({
         select: itemSelect,
         orderBy: { createdAt: "desc" },
     });
+    return items.map(mapPrismaItemToShopItem);
 }
 
 export async function getFeaturedItems() {
-    return prisma.item.findMany({
+    const items = await prisma.item.findMany({
         select: itemSelect,
         where: { deal: true },
         take: 8,
@@ -51,6 +70,7 @@ export async function getFeaturedItems() {
             { stock: "desc" },
         ],
     });
+    return items.map(mapPrismaItemToShopItem);
 }
 
 export async function createItem(data: {

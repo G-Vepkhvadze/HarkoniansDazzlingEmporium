@@ -67,6 +67,7 @@ export default function VaultCard({
           <img
             src={imageUrl}
             alt={quote || "Vault image"}
+            loading="lazy"
           />
         )}
       </div>

@@ -3,7 +3,7 @@
  * Used across components to ensure consistency.
  */
 
-import type { ItemRarity, ItemType } from "@prisma/client";
+import type { ItemRarity, ItemType } from "@/types/items";
 
 // Rarity labels for display
 // Matches the ItemRarity enum from Prisma schema

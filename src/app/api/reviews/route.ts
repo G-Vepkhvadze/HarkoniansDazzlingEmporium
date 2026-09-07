@@ -5,7 +5,13 @@ import { requireAuth as routeRequireAuth } from "@/lib/auth/routeProtection";
 // Re-export for convenience within this file
 const requireAuth = routeRequireAuth;
 
+import { unstable_cache } from "next/cache";
+
 export const runtime = 'nodejs';
+
+// Cache reviews for 60 seconds
+// Note: Reviews are per-item, so caching is less critical but still helps
+export const revalidate = 60;
 
 // Helper to get reviews with author information
 const getReviews = async (itemId: string) => {
@@ -44,7 +50,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "itemId is required" }, { status: 400 });
   }
 
-  const reviews = await getReviews(itemId);
+  // Use cache with item-specific key
+  const getCachedReviews = unstable_cache(
+    async () => getReviews(itemId),
+    ['reviews', itemId],
+    { revalidate: 60, tags: [`reviews-${itemId}`] }
+  );
+
+  const reviews = await getCachedReviews();
 
   // Sanitize reviews to remove sensitive data before sending to client
   const sanitizedReviews = reviews.map((review) => ({
@@ -65,7 +78,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Check authentication
-    const user = await requireAuth(request);
+    const user = await requireAuth();
 
     if (!user) {
       return NextResponse.json({ error: "Authentication required to post a review" }, { status: 401 });

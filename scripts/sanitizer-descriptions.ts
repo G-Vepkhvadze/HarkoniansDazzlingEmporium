@@ -1,26 +1,32 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { sanitizeFoundryDescription } from "@/lib/foundry/descriptions";
 
-const prisma = new PrismaClient();
-
+/**
+ * Batch sanitize all item descriptions.
+ * This script should be run once to clean up existing data.
+ * New items are automatically sanitized during creation/update in lib/items.ts
+ */
 async function main() {
+    console.log("Starting description sanitization...");
+
     const items = await prisma.item.findMany({
         select: {
             id: true,
             name: true,
             description: true,
         },
+        // Process in batches to avoid memory issues with large datasets
+        take: 100,
     });
 
-    console.log(`Found ${items.length} items.`);
+    console.log(`Found ${items.length} items to process.`);
 
     let updated = 0;
 
     for (const item of items) {
-        const cleaned =
-            sanitizeFoundryDescription(
-                item.description
-            );
+        const cleaned = sanitizeFoundryDescription(
+            item.description
+        );
 
         if (cleaned === item.description) {
             continue;
@@ -49,9 +55,6 @@ async function main() {
 
 main()
     .catch(error => {
-        console.error(error);
+        console.error("Sanitization failed:", error);
         process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
     });

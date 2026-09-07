@@ -1,12 +1,23 @@
 import { NextResponse } from "next/server";
 import { getItems, createItem, updateItem, deleteItem } from "@/lib/items";
 import { requireDM, unauthorizedResponse } from "@/lib/auth/routeProtection";
+import { unstable_cache } from "next/cache";
 
 export const runtime = 'nodejs';
 
+// Cache items for 60 seconds to reduce database load
+export const revalidate = 60;
+
 // GET requests are public (for the marketplace)
 export async function GET() {
-  const items = await getItems();
+  // Use unstable_cache for GET requests to avoid duplicate queries
+  const getCachedItems = unstable_cache(
+    async () => getItems(),
+    ['items-all'],
+    { revalidate: 60, tags: ['items'] }
+  );
+  
+  const items = await getCachedItems();
   return NextResponse.json(items);
 }
 

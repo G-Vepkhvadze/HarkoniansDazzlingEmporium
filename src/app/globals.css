@@ -1599,3 +1599,12 @@ h3 {
   color: inherit;
   text-decoration: none;
 }
+
+/* Admin Page - Image preview */
+.admin-image-preview {
+  max-width: 120px;
+  max-height: 120px;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  display: block;
+}
