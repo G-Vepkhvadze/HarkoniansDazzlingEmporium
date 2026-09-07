@@ -13,6 +13,8 @@ enum ItemRarity {
   RARE
   VERY_RARE
   LEGENDARY
+  ARTIFACT
+  UNIQUE
 }
 
 enum ItemType {

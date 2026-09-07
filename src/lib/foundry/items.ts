@@ -265,6 +265,8 @@ export function mapRarity(rarity?: string): ItemRarity {
     RARE: ItemRarity.RARE,
     VERY_RARE: ItemRarity.VERY_RARE,
     LEGENDARY: ItemRarity.LEGENDARY,
+    ARTIFACT: ItemRarity.ARTIFACT,
+    UNIQUE: ItemRarity.UNIQUE,
   };
   
   return rarityMap[normalized] || ItemRarity.COMMON;

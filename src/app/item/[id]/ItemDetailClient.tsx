@@ -33,6 +33,8 @@ const rarityLabels: Record<string, string> = {
   RARE: "Rare",
   VERY_RARE: "Very Rare",
   LEGENDARY: "Legendary",
+  ARTIFACT: "Artifact",
+  UNIQUE: "Unique",
 };
 
 const typeLabels: Record<string, string> = {

@@ -30,7 +30,7 @@ interface NewItem {
   stock: string;
 }
 
-const RARITIES = ["COMMON", "UNCOMMON", "RARE", "VERY_RARE", "LEGENDARY"];
+const RARITIES = ["COMMON", "UNCOMMON", "RARE", "VERY_RARE", "LEGENDARY", "ARTIFACT", "UNIQUE"];
 const TYPES = ["WEAPON", "EQUIPMENT", "CONSUMABLE", "TOOL", "LOOT", "CONTAINER", "SPELL", "FEAT"];
 
 const emptyNewItem: NewItem = {
