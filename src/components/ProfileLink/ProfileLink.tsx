@@ -14,7 +14,7 @@ export default function ProfileLink() {
   if (loading) {
     // Still loading - show a placeholder
     return (
-      <Link href="/auth" style={{ color: "inherit", textDecoration: "none" }}>
+      <Link href="/auth">
         Profile
       </Link>
     );
@@ -23,7 +23,7 @@ export default function ProfileLink() {
   if (!isAuthenticated || !user) {
     // Not logged in - redirect to auth
     return (
-      <Link href="/auth" style={{ color: "inherit", textDecoration: "none" }}>
+      <Link href="/auth">
         Profile
       </Link>
     );
@@ -34,7 +34,7 @@ export default function ProfileLink() {
   const profileHref = user.role === "DM" ? "/dm" : "/user";
 
   return (
-    <Link href={profileHref} style={{ color: "inherit", textDecoration: "none" }}>
+    <Link href={profileHref}>
       Profile
     </Link>
   );

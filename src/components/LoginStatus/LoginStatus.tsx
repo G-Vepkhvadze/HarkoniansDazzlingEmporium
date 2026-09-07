@@ -75,15 +75,6 @@ export default function LoginStatus() {
     <Link
       href="/user"
       className="login-status"
-      style={{
-        marginLeft: "1rem",
-        padding: "0.5rem 1rem",
-        background: "var(--background-secondary)",
-        borderRadius: "8px",
-        fontSize: "0.9rem",
-        color: "inherit",
-        textDecoration: "none",
-      }}
     >
       {displayText}
     </Link>

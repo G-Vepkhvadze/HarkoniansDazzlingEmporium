@@ -3,28 +3,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ShopItem } from "@/types/items";
 import { getImageUrl } from "@/lib/imageUrl";
-
-const rarityLabels: Record<ShopItem["rarity"], string> = {
-    COMMON: "Common",
-    UNCOMMON: "Uncommon",
-    RARE: "Rare",
-    VERY_RARE: "Very Rare",
-    LEGENDARY: "Legendary",
-    ARTIFACT: "Artifact",
-    UNIQUE: "Unique",
-};
+import { rarityLabels } from "@/lib/constants/labels";
+import { formatGold, calculateSalePrice } from "@/lib/utils/format";
 
 const imageSrc = (item: ShopItem) => getImageUrl(item.image);
-
-function formatGold(n: number) {
-    return `${n.toLocaleString()} Gold`;
-}
 
 export default function ItemCard({ item }: { item: ShopItem }) {
     const router = useRouter();
     const [showImage, setShowImage] = useState(Boolean(item.image));
     const discount = item.deal && item.discountPercent ? item.discountPercent : 0;
-    const saleValue = Math.round(item.price * (1 - discount / 100));
+    const saleValue = calculateSalePrice(item.price, discount);
 
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -32,7 +20,7 @@ export default function ItemCard({ item }: { item: ShopItem }) {
     };
 
     return (
-        <article className="item-card" tabIndex={0} onClick={handleClick} style={{ cursor: "pointer" }}>
+        <article className="item-card" tabIndex={0} onClick={handleClick}>
             <div className="item-card__image" aria-hidden="true">
                 {item.deal && item.discountPercent > 0 ? (
                     <span className="deal-tag">{item.discountPercent}% off</span>

@@ -1,14 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getSessionByToken } from "@/lib/auth/session";
-import { SESSION_COOKIE_CONFIG } from "@/lib/auth/index";
+import { requireAuth as routeRequireAuth } from "@/lib/auth/routeProtection";
+
+// Re-export for convenience within this file
+const requireAuth = routeRequireAuth;
 
 export const runtime = 'nodejs';
 
 // Helper to get reviews with author information
 const getReviews = async (itemId: string) => {
-  return await prisma.review.findMany({
+  return prisma.review.findMany({
     where: { itemId },
     orderBy: { createdAt: "desc" },
     include: {
@@ -25,7 +26,7 @@ const getReviews = async (itemId: string) => {
 
 // Helper to create a review
 const createReview = async (itemId: string, userId: string, authorName: string, content: string) => {
-  return await prisma.review.create({
+  return prisma.review.create({
     data: {
       itemId,
       userId,
@@ -33,19 +34,6 @@ const createReview = async (itemId: string, userId: string, authorName: string, 
       content,
     },
   });
-};
-
-// Helper to check if user is authenticated
-const requireAuth = async (request: Request) => {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get(SESSION_COOKIE_CONFIG.name)?.value;
-
-  if (!sessionToken) {
-    return null;
-  }
-
-  const session = await getSessionByToken(sessionToken);
-  return session?.user || null;
 };
 
 export async function GET(request: Request) {

@@ -4,25 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import ItemCard from "@/components/ItemCard/ItemCard";
 import type { ItemRarity, ItemType, ShopItem } from "@/types/items";
-
-const rarityOptions: Array<{ label: string; value: ItemRarity }> = [
-    { label: "Common", value: "COMMON" },
-    { label: "Uncommon", value: "UNCOMMON" },
-    { label: "Rare", value: "RARE" },
-    { label: "Very Rare", value: "VERY_RARE" },
-    { label: "Legendary", value: "LEGENDARY" },
-];
-
-const typeOptions: Array<{ label: string; value: ItemType }> = [
-    { label: "Weapon", value: "WEAPON" },
-    { label: "Equipment", value: "EQUIPMENT" },
-    { label: "Consumable", value: "CONSUMABLE" },
-    { label: "Tool", value: "TOOL" },
-    { label: "Loot", value: "LOOT" },
-    { label: "Container", value: "CONTAINER" },
-    { label: "Spell", value: "SPELL" },
-    { label: "Feat", value: "FEAT" },
-];
+import { rarityOptions, typeOptions } from "@/lib/constants/labels";
 
 type StockFilter = "ALL" | "IN_STOCK" | "OUT_OF_STOCK";
 

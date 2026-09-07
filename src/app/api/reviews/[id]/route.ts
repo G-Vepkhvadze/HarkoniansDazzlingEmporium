@@ -1,23 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getSessionByToken } from "@/lib/auth/session";
-import { SESSION_COOKIE_CONFIG } from "@/lib/auth/index";
+import { requireAuth as routeRequireAuth } from "@/lib/auth/routeProtection";
+
+// Re-export for convenience within this file
+const requireAuth = routeRequireAuth;
 
 export const runtime = 'nodejs';
-
-// Helper to check if user is authenticated
-const requireAuth = async (request: Request) => {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get(SESSION_COOKIE_CONFIG.name)?.value;
-
-  if (!sessionToken) {
-    return null;
-  }
-
-  const session = await getSessionByToken(sessionToken);
-  return session?.user || null;
-};
 
 // Helper to get review with user info
 const getReviewWithUser = async (id: string) => {

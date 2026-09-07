@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { getImageUrl } from "@/lib/imageUrl";
 import { Filter } from "bad-words";
 import { isLoggedIn, getUsername } from "@/lib/auth";
+import { rarityLabels, typeLabels, legacyTypeLabels, getTypeLabel } from "@/lib/constants/labels";
+import { formatGold, calculateSalePrice, formatStock } from "@/lib/utils/format";
 
 interface Review {
   id: string;
@@ -25,40 +27,6 @@ interface ItemWithReviews {
   discountPercent: number;
   stock: number;
   reviews: Review[];
-}
-
-const rarityLabels: Record<string, string> = {
-  COMMON: "Common",
-  UNCOMMON: "Uncommon",
-  RARE: "Rare",
-  VERY_RARE: "Very Rare",
-  LEGENDARY: "Legendary",
-  ARTIFACT: "Artifact",
-  UNIQUE: "Unique",
-};
-
-const typeLabels: Record<string, string> = {
-  WEAPON: "Weapon",
-  EQUIPMENT: "Equipment",
-  CONSUMABLE: "Consumable",
-  TOOL: "Tool",
-  LOOT: "Loot",
-  CONTAINER: "Container",
-  SPELL: "Spell",
-  FEAT: "Feat",
-  // Legacy support for existing data
-  ARMOR: "Equipment",
-  ACCESSORY: "Equipment",
-  SCROLL: "Consumable",
-  POTION: "Consumable",
-};
-
-function formatGold(n: number) {
-  return `${n.toLocaleString()} Gold`;
-}
-
-function calculateSalePrice(price: number, discountPercent: number) {
-  return Math.round(price * (1 - discountPercent / 100));
 }
 
 export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
@@ -317,7 +285,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
         <div className="item-detail-info">
           <h1 className="item-detail-name">{item.name}</h1>
           <p className="item-detail-type">
-            {typeLabels[item.type] || item.type} · {rarityLabels[item.rarity] || item.rarity}
+            {getTypeLabel(item.type)} · {rarityLabels[item.rarity as keyof typeof rarityLabels] || item.rarity}
           </p>
           <div className="item-detail-price-row">
             {discount > 0 ? (
@@ -335,42 +303,18 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
           </div>
           <p className="item-detail-description">{item.description}</p>
           <p className="item-detail-stock">
-            {item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}
+            {formatStock(item.stock)}
           </p>
         </div>
 
-        <section className="item-detail-purchase" style={{
-          marginTop: "2rem",
-          padding: "1.5rem",
-          border: "1px solid rgba(216, 170, 79, 0.24)",
-          borderRadius: "2px",
-          background: "linear-gradient(145deg, rgba(45, 30, 20, 0.92), rgba(22, 15, 10, 0.95))",
-        }}>
-          <h2 style={{
-            color: "var(--gold-soft)",
-            fontSize: "1.3rem",
-            marginBottom: "1rem",
-            fontFamily: "var(--fantasy-font)",
-          }}>
+        <section className="item-detail-purchase">
+          <h2>
             Purchase {item.name}
           </h2>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "auto 1fr auto",
-            gap: "1rem",
-            alignItems: "center",
-            maxWidth: "500px",
-          }}>
+          <div className="item-detail-purchase-grid">
             {loggedIn && characters.length > 0 && (
-                <div style={{ marginBottom: "1rem" }}>
-                  <label
-                      style={{
-                        display: "block",
-                        color: "var(--cream)",
-                        fontWeight: 700,
-                        marginBottom: "0.5rem",
-                      }}
-                  >
+                <div>
+                  <label className="item-detail-purchase-label">
                     Purchase for:
                   </label>
 
@@ -379,14 +323,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
                       onChange={(e) =>
                           setSelectedCharacterId(e.target.value)
                       }
-                      style={{
-                        width: "100%",
-                        border: "1px solid rgba(216, 170, 79, 0.35)",
-                        borderRadius: "2px",
-                        background: "#130d09",
-                        color: "var(--cream)",
-                        padding: "0.5rem",
-                      }}
+                      className="item-detail-purchase-select"
                   >
                     <option value="">
                       Select a character
@@ -404,10 +341,7 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
                   </select>
                 </div>
             )}
-            <label style={{
-              color: "var(--cream)",
-              fontWeight: 700,
-            }}>
+            <label className="item-detail-purchase-label">
               Quantity:
             </label>
             <input
@@ -429,43 +363,15 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
                     );
                   }
                 }}
-                style={{
-                  border: "1px solid rgba(216, 170, 79, 0.35)",
-                  borderRadius: "2px",
-                  background: "#130d09",
-                  color: "var(--cream)",
-                  padding: "0.5rem",
-                  width: "80px",
-                }}
+                className="item-detail-purchase-input"
             />
           </div>
-          <div style={{
-            marginTop: "1rem",
-            paddingTop: "1rem",
-            borderTop: "1px solid rgba(216, 170, 79, 0.18)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}>
-            <span style={{
-              color: "var(--cream)",
-              fontSize: "1.1rem",
-              fontWeight: 700,
-            }}>
+          <div className="item-detail-purchase-divider">
+            <span className="item-detail-purchase-total">
               Total: {formatGold(displayPrice * purchaseQuantity)}
             </span>
             <button
-                style={{
-                  border: "1px solid rgba(216, 170, 79, 0.4)",
-                  borderRadius: "2px",
-                  background: "rgba(216, 170, 79, 0.18)",
-                  color: "var(--cream)",
-                  padding: "0.55rem 1.25rem",
-                  fontSize: "0.95rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "background 140ms ease, border-color 140ms ease",
-                }}
+                className="item-detail-purchase-btn"
                 onClick={handlePurchase}
                 disabled={
                     purchasing ||

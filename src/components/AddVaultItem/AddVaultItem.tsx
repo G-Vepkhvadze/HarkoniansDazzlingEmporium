@@ -161,7 +161,7 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
             <form className="vault-modal__form" onSubmit={handleSubmit}>
               <div className="vault-modal__field">
                 <label htmlFor="vault-image">Image (max {MAX_IMAGE_WIDTH}px width)</label>
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                <div className="vault-modal__field-content">
                   <label className="vault-image-upload" htmlFor="vault-image">
                     {imagePreview ? (
                       <img src={imagePreview} alt="Preview" />
