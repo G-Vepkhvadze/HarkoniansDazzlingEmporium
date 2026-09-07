@@ -91,7 +91,8 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
   const exceptions = [
     "fuck", "shit", "cunt", "twat", "bitch", "ass", 
     "asshole", "dickhead", "shithead", "cunthead", "twathead",
-    "bitchhead", "slut", "slutty", "fucker"
+    "bitchhead", "slut", "slutty", "fucker", "dick", "Dick", "Dickhead",
+      "Shithead", "Asshole",
   ];
 
   exceptions.forEach(word => {
@@ -361,8 +362,15 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
             maxWidth: "500px",
           }}>
             {loggedIn && characters.length > 0 && (
-                <div>
-                  <label>
+                <div style={{ marginBottom: "1rem" }}>
+                  <label
+                      style={{
+                        display: "block",
+                        color: "var(--cream)",
+                        fontWeight: 700,
+                        marginBottom: "0.5rem",
+                      }}
+                  >
                     Purchase for:
                   </label>
 
@@ -371,6 +379,14 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
                       onChange={(e) =>
                           setSelectedCharacterId(e.target.value)
                       }
+                      style={{
+                        width: "100%",
+                        border: "1px solid rgba(216, 170, 79, 0.35)",
+                        borderRadius: "2px",
+                        background: "#130d09",
+                        color: "var(--cream)",
+                        padding: "0.5rem",
+                      }}
                   >
                     <option value="">
                       Select a character
@@ -439,20 +455,26 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
               Total: {formatGold(displayPrice * purchaseQuantity)}
             </span>
             <button
-              style={{
-                border: "1px solid rgba(216, 170, 79, 0.4)",
-                borderRadius: "2px",
-                background: "rgba(216, 170, 79, 0.18)",
-                color: "var(--cream)",
-                padding: "0.55rem 1.25rem",
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "background 140ms ease, border-color 140ms ease",
-              }}
-              onClick={() => {handlePurchase}}
+                style={{
+                  border: "1px solid rgba(216, 170, 79, 0.4)",
+                  borderRadius: "2px",
+                  background: "rgba(216, 170, 79, 0.18)",
+                  color: "var(--cream)",
+                  padding: "0.55rem 1.25rem",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "background 140ms ease, border-color 140ms ease",
+                }}
+                onClick={handlePurchase}
+                disabled={
+                    purchasing ||
+                    item.stock === 0 ||
+                    !loggedIn ||
+                    !selectedCharacterId
+                }
             >
-              Purchase
+              {purchasing ? "Purchasing..." : "Purchase"}
             </button>
           </div>
         </section>
