@@ -173,30 +173,35 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prevent a Foundry item published by another paired world from being
-    // delivered into this character's world.
     const foundryItemObject =
-      typeof item.foundryItemData === "object" &&
-      item.foundryItemData !== null &&
-      !Array.isArray(item.foundryItemData)
-        ? item.foundryItemData as Record<string, unknown>
-        : null;
+        typeof item.foundryItemData === "object" &&
+        item.foundryItemData !== null &&
+        !Array.isArray(item.foundryItemData)
+            ? item.foundryItemData as Record<string, unknown>
+            : null;
 
     const foundryMetadata =
-      foundryItemObject?._harkoniansMetadata;
+        foundryItemObject?._harkoniansMetadata;
+
+    const foundryWorldId =
+        typeof foundryMetadata === "object" &&
+        foundryMetadata !== null &&
+        !Array.isArray(foundryMetadata) &&
+        "foundryWorldId" in foundryMetadata &&
+        typeof foundryMetadata.foundryWorldId === "string"
+            ? foundryMetadata.foundryWorldId
+            : null;
 
     if (
-      typeof foundryMetadata !== "object" ||
-      foundryMetadata === null ||
-      Array.isArray(foundryMetadata) ||
-      foundryMetadata.foundryWorldId !== character.foundryWorldId
+        !foundryWorldId ||
+        foundryWorldId !== character.foundryWorldId
     ) {
       return NextResponse.json(
-        {
-          error:
-            "This Foundry item is not linked to the same Foundry world as the selected character."
-        },
-        { status: 409 }
+          {
+            error:
+                "This Foundry item is not linked to the same Foundry world as the selected character."
+          },
+          { status: 409 }
       );
     }
 
