@@ -28,7 +28,8 @@ export async function GET(request: Request) {
           status: "PENDING"
         },
         include: {
-          item: true
+          item: true,
+          character: true
         },
         orderBy: {
           createdAt: "asc"
