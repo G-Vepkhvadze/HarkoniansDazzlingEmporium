@@ -173,6 +173,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // Prevent a Foundry item published by another paired world from being
+    // delivered into this character's world.
+    const foundryItemObject =
+      typeof item.foundryItemData === "object" &&
+      item.foundryItemData !== null &&
+      !Array.isArray(item.foundryItemData)
+        ? item.foundryItemData as Record<string, unknown>
+        : null;
+
+    const foundryMetadata =
+      foundryItemObject?._harkoniansMetadata;
+
+    if (
+      typeof foundryMetadata !== "object" ||
+      foundryMetadata === null ||
+      Array.isArray(foundryMetadata) ||
+      foundryMetadata.foundryWorldId !== character.foundryWorldId
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "This Foundry item is not linked to the same Foundry world as the selected character."
+        },
+        { status: 409 }
+      );
+    }
+
     // ---------------------------------------------------------
     // Idempotency
     // ---------------------------------------------------------
@@ -185,6 +212,21 @@ export async function POST(request: Request) {
       });
 
     if (existingPurchase) {
+      // An idempotency key is only valid for the exact original request.
+      if (
+        existingPurchase.characterId !== characterId ||
+        existingPurchase.itemId !== itemId ||
+        existingPurchase.quantity !== quantity
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Idempotency key was already used for a different purchase request."
+          },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json({
         success: true,
         purchase: {
@@ -256,70 +298,49 @@ export async function POST(request: Request) {
     // Atomic purchase transaction
     // ---------------------------------------------------------
 
-    const purchase =
-      await prisma.$transaction(
-        async (tx) => {
-          // Re-check finite stock inside transaction.
-          if (!isUnlimited) {
-            const currentItem =
-              await tx.item.findUnique({
-                where: {
-                  id: itemId
-                },
-                select: {
-                  stock: true
-                }
-              });
+    let purchase;
 
-            if (
-              !currentItem ||
-              currentItem.stock < quantity
-            ) {
-              throw new Error(
-                "Insufficient stock"
-              );
+    try {
+      purchase = await prisma.$transaction(async (tx) => {
+        // Reserve the idempotency key first. If another request is using the
+        // same key, the unique constraint blocks here rather than allowing
+        // that request to consume stock or GP before discovering the race.
+        const newPurchase =
+          await tx.purchase.create({
+            data: {
+              idempotencyKey,
+              characterId,
+              itemId,
+              itemName: item.name,
+              priceGp: totalPriceGp,
+              quantity,
+              status: "PENDING"
             }
-          }
+          });
 
-          // Re-check balance inside transaction.
-          const currentCharacter =
-            await tx.character.findUnique({
-              where: {
-                id: characterId
-              },
-              select: {
-                creditBalance: true
-              }
-            });
-
-          if (
-            !currentCharacter ||
-            currentCharacter.creditBalance <
-              totalPriceGp
-          ) {
-            throw new Error(
-              "Insufficient funds"
-            );
-          }
-
-          // Create the pending purchase.
-          const newPurchase =
-            await tx.purchase.create({
-              data: {
-                idempotencyKey,
-                characterId,
-                itemId,
-                itemName: item.name,
-                priceGp: totalPriceGp,
-                quantity,
-                status: "PENDING"
-              }
-            });
-
-          // Deduct GP.
-          await tx.character.update({
+        // Atomically reserve finite stock.
+        if (!isUnlimited) {
+          const stockResult = await tx.item.updateMany({
             where: {
-              id: characterId
+              id: itemId,
+              stock: { gte: quantity }
+            },
+            data: {
+              stock: { decrement: quantity }
+            }
+          });
+
+          if (stockResult.count !== 1) {
+            throw new Error("Insufficient stock");
+          }
+        }
+
+        // Atomically reserve the character's GP.
+        const balanceResult =
+          await tx.character.updateMany({
+            where: {
+              id: characterId,
+              creditBalance: { gte: totalPriceGp }
             },
             data: {
               creditBalance: {
@@ -328,23 +349,56 @@ export async function POST(request: Request) {
             }
           });
 
-          // Decrement finite stock.
-          if (!isUnlimited) {
-            await tx.item.update({
-              where: {
-                id: itemId
+        if (balanceResult.count !== 1) {
+          throw new Error("Insufficient funds");
+        }
+
+        return newPurchase;
+      });
+
+    } catch (error) {
+      // A unique idempotency race must return the already-created purchase,
+      // not HTTP 500 and not charge the player a second time.
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2002"
+      ) {
+        const concurrentPurchase =
+          await prisma.purchase.findUnique({
+            where: { idempotencyKey }
+          });
+
+        if (concurrentPurchase) {
+          if (
+            concurrentPurchase.characterId !== characterId ||
+            concurrentPurchase.itemId !== itemId ||
+            concurrentPurchase.quantity !== quantity
+          ) {
+            return NextResponse.json(
+              {
+                error:
+                  "Idempotency key was already used for a different purchase request."
               },
-              data: {
-                stock: {
-                  decrement: quantity
-                }
-              }
-            });
+              { status: 409 }
+            );
           }
 
-          return newPurchase;
+          return NextResponse.json({
+            success: true,
+            purchase: {
+              id: concurrentPurchase.id,
+              status: concurrentPurchase.status,
+              message:
+                "Duplicate request - returning existing purchase"
+            }
+          });
         }
-      );
+      }
+
+      throw error;
+    }
 
     // =========================================================
     // PURCHASE DELIVERY
@@ -391,12 +445,15 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          error:
-            "Purchase was created, but delivery to Foundry failed. Please try again or contact the DM.",
-          purchaseId: purchase.id,
-          status: purchase.status
+          success: true,
+          purchase: {
+            id: purchase.id,
+            status: "PENDING",
+            message:
+              "Purchase created. Foundry delivery is pending and will be retried automatically."
+          }
         },
-        { status: 500 }
+        { status: 202 }
       );
     }
 

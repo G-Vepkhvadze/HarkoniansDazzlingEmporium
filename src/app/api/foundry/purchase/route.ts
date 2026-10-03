@@ -248,13 +248,34 @@ export async function POST(request: Request) {
       }
 
       // -------------------------------------------------------
-      // Refund GP + restore stock + mark FAILED atomically
+      // Atomically claim the pending purchase before refunding.
+      //
+      // This prevents two retrying Foundry clients from both refunding
+      // the same purchase.
       // -------------------------------------------------------
 
       const {
         updatedCharacter,
         updatedItem
       } = await prisma.$transaction(async (tx) => {
+        const claimed =
+          await tx.purchase.updateMany({
+            where: {
+              id: purchaseId,
+              status: "PENDING"
+            },
+            data: {
+              status: "FAILED",
+              failureReason: error || null
+            }
+          });
+
+        if (claimed.count !== 1) {
+          throw new Error(
+            "Purchase is no longer pending."
+          );
+        }
+
         const updatedCharacter =
           await tx.character.update({
             where: {
@@ -285,16 +306,6 @@ export async function POST(request: Request) {
             }
           });
         }
-
-        await tx.purchase.update({
-          where: {
-            id: purchaseId
-          },
-          data: {
-            status: "FAILED",
-            failureReason: error || null
-          }
-        });
 
         return {
           updatedCharacter,
@@ -379,6 +390,19 @@ export async function POST(request: Request) {
     // =========================================================
 
     if (status === "completed") {
+      if (!foundryActorId || !foundryItemId) {
+        const response = NextResponse.json(
+          {
+            error:
+              "completed purchases require foundryActorId and foundryItemId"
+          },
+          { status: 400 }
+        );
+
+        addCorsHeaders(response, request);
+        return response;
+      }
+
       const purchase =
         await prisma.purchase.findUnique({
           where: {
@@ -550,6 +574,61 @@ export async function POST(request: Request) {
         purchaseId,
         context
       );
+
+      // Reconciliation broadcasts are safe after completion because they
+      // do not perform another deduction. They repair state when the
+      // original purchase event was delivered via a retry/resync path.
+      try {
+        const currentCharacter =
+          await prisma.character.findUnique({
+            where: { id: purchase.characterId },
+            select: {
+              id: true,
+              foundryActorId: true,
+              creditBalance: true
+            }
+          });
+
+        if (currentCharacter?.foundryActorId) {
+          await broadcastToCharacter(
+            purchase.characterId,
+            {
+              event: "gold_update",
+              payload: {
+                actorId: currentCharacter.foundryActorId,
+                characterId: currentCharacter.id,
+                gold: currentCharacter.creditBalance
+              }
+            }
+          );
+        }
+
+        if (purchase.item) {
+          const currentItem =
+            await prisma.item.findUnique({
+              where: { id: purchase.item.id },
+              select: { stock: true }
+            });
+
+          if (currentItem) {
+            await broadcastToCharacter(
+              purchase.characterId,
+              {
+                event: "stock_update",
+                payload: {
+                  itemId: purchase.item.id,
+                  stock: currentItem.stock
+                }
+              }
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Purchase completed but reconciliation broadcast failed:",
+          error
+        );
+      }
 
       /*
        * IMPORTANT:

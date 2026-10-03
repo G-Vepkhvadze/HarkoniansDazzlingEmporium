@@ -3,6 +3,7 @@ import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
 import { broadcastToCharacter } from "@/lib/foundry/realtime";
+import { requireFullFoundryAuthorization } from "@/lib/foundry/worldSecretMiddleware";
 
 export const runtime = 'nodejs';
 
@@ -38,6 +39,9 @@ export async function OPTIONS(request: Request) {
  */
 export async function GET(request: Request) {
   try {
+    const auth =
+      await requireFullFoundryAuthorization(request);
+
     const { searchParams } = new URL(request.url);
     const worldId = searchParams.get("worldId");
     const actorId = searchParams.get("actorId");
@@ -46,6 +50,18 @@ export async function GET(request: Request) {
       const response = NextResponse.json(
         { error: "worldId and actorId query parameters are required" },
         { status: 400 }
+      );
+      addCorsHeaders(response, request);
+      return response;
+    }
+
+    if (
+      auth.world.foundryWorldId !== worldId ||
+      auth.character.foundryActorId !== actorId
+    ) {
+      const response = NextResponse.json(
+        { error: "Character is not authorized for this actor and world." },
+        { status: 403 }
       );
       addCorsHeaders(response, request);
       return response;
@@ -106,9 +122,17 @@ export async function GET(request: Request) {
     return response;
   } catch (error) {
     console.error("Get gold error:", error);
+    const message =
+      (error as Error).message || "An error occurred";
+    const status =
+      message.startsWith("UNAUTHENTICATED")
+        ? 401
+        : message.startsWith("FORBIDDEN")
+          ? 403
+          : 500;
     const response = NextResponse.json(
-      { error: (error as Error).message || "An error occurred" },
-      { status: 500 }
+      { error: message },
+      { status }
     );
     addCorsHeaders(response, request);
     return response;
@@ -136,6 +160,9 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
+    const auth =
+      await requireFullFoundryAuthorization(request);
+
     // Validate world secret
     const worldSecret = request.headers.get("x-foundry-world-secret");
     if (!worldSecret) {
@@ -184,11 +211,39 @@ export async function POST(request: Request) {
       return response;
     }
 
+    if (
+      typeof gold !== "number" ||
+      !Number.isFinite(gold) ||
+      !Number.isInteger(gold) ||
+      gold < 0
+    ) {
+      const response = NextResponse.json(
+        { error: "gold must be a non-negative whole number" },
+        { status: 400 }
+      );
+      addCorsHeaders(response, request);
+      return response;
+    }
+
     // Verify world ID matches
     if (world.foundryWorldId !== foundryWorldId) {
       const response = NextResponse.json(
         { error: "World secret does not match the specified Foundry world" },
         { status: 401 }
+      );
+      addCorsHeaders(response, request);
+      return response;
+    }
+
+    if (
+      auth.character.id === undefined ||
+      auth.character.foundryWorldId !== foundryWorldId ||
+      auth.character.foundryActorId !== foundryActorId ||
+      auth.world.id !== world.id
+    ) {
+      const response = NextResponse.json(
+        { error: "Character token does not match the supplied Foundry actor." },
+        { status: 403 }
       );
       addCorsHeaders(response, request);
       return response;
@@ -237,45 +292,52 @@ export async function POST(request: Request) {
       }
     });
 
-    const context =
+    // Audit and realtime propagation are secondary effects. Neither is
+    // allowed to turn a successful authoritative gold sync into HTTP 500.
+    try {
+      const context =
         createAuditContextFromRequest(
-            request,
-            {
-              foundryWorldId,
-              foundryActorId,
-              oldBalance,
-              newBalance:
+          request,
+          {
+            foundryWorldId,
+            foundryActorId,
+            oldBalance,
+            newBalance:
               character.creditBalance
-            }
+          }
         );
-    await createAuditLog(
-      world.dmUserId,
-      "CREDIT_ADJUSTMENT",
-      "Character",
-      character.id,
-      context
-    );
 
-    // Broadcast gold update to Foundry via Supabase Realtime
-    // Find the character to get their ID for the private channel
-    const charForBroadcast = await prisma.character.findFirst({
-      where: {
-        foundryWorldId: foundryWorldId,
-        foundryActorId: foundryActorId,
-        katastroWorldId: world.id
-      },
-      select: { id: true }
-    });
-    
-    if (charForBroadcast) {
-      await broadcastToCharacter(charForBroadcast.id, {
-        event: "gold_update",
-        payload: {
-          actorId: foundryActorId,
-          characterId: charForBroadcast.id,
-          gold: character.creditBalance
+      await createAuditLog(
+        world.dmUserId,
+        "CREDIT_ADJUSTMENT",
+        "Character",
+        character.id,
+        context
+      );
+    } catch (error) {
+      console.error(
+        "Gold sync succeeded but audit logging failed:",
+        error
+      );
+    }
+
+    try {
+      await broadcastToCharacter(
+        character.id,
+        {
+          event: "gold_update",
+          payload: {
+            actorId: foundryActorId,
+            characterId: character.id,
+            gold: character.creditBalance
+          }
         }
-      });
+      );
+    } catch (error) {
+      console.error(
+        "Gold sync succeeded but realtime broadcast failed:",
+        error
+      );
     }
 
     const response = NextResponse.json({
@@ -288,9 +350,17 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     console.error("Sync gold error:", error);
+    const message =
+      (error as Error).message || "An error occurred";
+    const status =
+      message.startsWith("UNAUTHENTICATED")
+        ? 401
+        : message.startsWith("FORBIDDEN")
+          ? 403
+          : 500;
     const response = NextResponse.json(
-      { error: (error as Error).message || "An error occurred" },
-      { status: 500 }
+      { error: message },
+      { status }
     );
     addCorsHeaders(response, request);
     return response;

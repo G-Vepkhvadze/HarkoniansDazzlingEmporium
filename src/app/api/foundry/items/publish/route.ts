@@ -405,11 +405,16 @@ export async function POST(request: Request) {
       let updatedItem;
 
       if (existingItem.stock === -1) {
-        // Already unlimited. Leave it unlimited.
+        // Already unlimited. Keep it unlimited, but refresh the image URL.
         updatedItem =
-          await prisma.item.findUnique({
+          await prisma.item.update({
             where: {
               id: existingItem.id
+            },
+            data: {
+              image:
+                payload.image ||
+                existingItem.image
             },
             select: {
               id: true,
@@ -419,8 +424,7 @@ export async function POST(request: Request) {
               price: true,
               stock: true
             }
-          });
-      } else {
+          });      } else {
         // Atomic increment prevents lost updates
         // when multiple publishes happen concurrently.
         updatedItem =
@@ -432,7 +436,10 @@ export async function POST(request: Request) {
               stock: {
                 increment:
                   additionalStock
-              }
+              },
+              image:
+                payload.image ||
+                existingItem.image
             },
             select: {
               id: true,
