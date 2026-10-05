@@ -45,19 +45,6 @@ export async function OPTIONS(request: Request) {
     return foundryOptions(request);
 }
 
-/**
- * POST /api/foundry/gold/sync
- *
- * Synchronizes Foundry gold with Harkonians.
- *
- * expectedGold is the balance Foundry believes
- * Harkonians currently has.
- *
- * If Harkonians has changed since that baseline
- * (for example because a purchase deducted gold),
- * this endpoint returns 409 with the authoritative
- * server balance instead of overwriting it.
- */
 export async function POST(request: Request) {
     try {
         const auth =
