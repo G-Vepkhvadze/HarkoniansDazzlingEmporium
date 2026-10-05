@@ -35,16 +35,18 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { image, quote } = body;
+    const { image, artist, quote } = body;
 
-    if (!image || !quote) {
+    if (typeof image !== "string" || !image.trim() ||
+        typeof artist !== "string" || !artist.trim() ||
+        typeof quote !== "string" || !quote.trim()) {
       return NextResponse.json(
-        { error: "Both image and quote are required" },
+        { error: "Image, artist, and quote are required" },
         { status: 400 }
       );
     }
 
-    const created = await createVaultItem({ image, quote });
+    const created = await createVaultItem({ image: image.trim(), artist: artist.trim(), quote: quote.trim() });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error("Error creating vault item:", error);

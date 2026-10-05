@@ -39,6 +39,7 @@ export default async function TheVaultPage() {
                 key={item.id}
                 id={item.id}
                 image={item.image}
+                artist={item.artist}
                 quote={item.quote}
                 likeCount={item.likeCount}
                 initialIsLiked={currentUser ? item.isLikedByUser : false}

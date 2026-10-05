@@ -16,6 +16,7 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [quote, setQuote] = useState("");
+  const [artist, setArtist] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -76,6 +77,11 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
       return;
     }
 
+    if (!artist.trim()) {
+      setError("Please add the artist name");
+      return;
+    }
+
     setIsUploading(true);
     setError(null);
     setSuccess(null);
@@ -107,6 +113,7 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
         },
         body: JSON.stringify({
           image: imagePath,
+          artist: artist.trim(),
           quote: quote.trim(),
         }),
         credentials: "include",
@@ -121,6 +128,7 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
       setImageFile(null);
       setImagePreview(null);
       setQuote("");
+      setArtist("");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -191,6 +199,19 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
               </div>
 
               <div className="vault-modal__field">
+                <label htmlFor="vault-artist">Artist</label>
+                <input
+                  id="vault-artist"
+                  className="vault-modal__input"
+                  value={artist}
+                  onChange={(e) => setArtist(e.target.value)}
+                  placeholder="Artist name"
+                  disabled={isUploading}
+                  required
+                />
+              </div>
+
+              <div className="vault-modal__field">
                 <label htmlFor="vault-quote">Quote/Comment</label>
                 <textarea
                   id="vault-quote"
@@ -214,7 +235,7 @@ export default function AddVaultItem({ onAdded }: AddVaultItemProps) {
                 <button
                   type="submit"
                   className="vault-modal__btn vault-modal__btn--primary"
-                  disabled={isUploading || !imageFile || !quote.trim()}
+                  disabled={isUploading || !imageFile || !artist.trim() || !quote.trim()}
                 >
                   {isUploading ? "Adding..." : "Add to Vault"}
                 </button>

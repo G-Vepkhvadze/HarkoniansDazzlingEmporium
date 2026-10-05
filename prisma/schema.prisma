@@ -324,6 +324,7 @@ model AuditLog {
 model VaultItem {
   id        String   @id @default(uuid())
   image     String
+  artist    String?
   quote     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -344,4 +345,13 @@ model VaultLike {
   @@unique([vaultItemId, userId])
   @@index([vaultItemId])
   @@index([userId])
+}
+
+model Appraisal {
+  id              String   @id @default(uuid())
+  itemName        String
+  itemDescription String
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
 }

@@ -7,6 +7,7 @@ import { useAuth } from "@/components/AuthProvider/AuthProvider";
 interface VaultCardProps {
   id: string;
   image: string;
+  artist: string | null;
   quote: string;
   likeCount: number;
   initialIsLiked?: boolean;
@@ -16,6 +17,7 @@ interface VaultCardProps {
 export default function VaultCard({
   id,
   image,
+  artist,
   quote,
   likeCount,
   initialIsLiked = false,
@@ -71,6 +73,9 @@ export default function VaultCard({
           />
         )}
       </div>
+      {artist && (
+        <p className="vault-card__artist">Art By {artist}</p>
+      )}
       <div className="vault-card__content">
         <p className="vault-card__quote">{quote}</p>
         <div className="vault-card__meta">

@@ -4,10 +4,12 @@ import { getSupabase, VAULT_BUCKET } from "./supabase";
 // Type definitions
 interface VaultItemData {
   image: string;
+  artist: string;
   quote: string;
 }
 
-interface VaultItemWithLikes extends VaultItemData {
+interface VaultItemWithLikes extends Omit<VaultItemData, "artist"> {
+  artist: string | null;
   id: string;
   createdAt: Date;
   updatedAt: Date;
@@ -21,6 +23,7 @@ interface VaultItemWithLikes extends VaultItemData {
 const vaultItemSelect = {
   id: true,
   image: true,
+  artist: true,
   quote: true,
   createdAt: true,
   updatedAt: true,
@@ -72,6 +75,7 @@ export async function getVaultItems(userId?: string): Promise<VaultItemWithLikes
     return {
       id: item.id,
       image: item.image,
+      artist: item.artist,
       quote: item.quote,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
@@ -105,6 +109,7 @@ export async function getVaultItemById(id: string, userId?: string): Promise<Vau
   return {
     id: item.id,
     image: item.image,
+    artist: item.artist,
     quote: item.quote,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
@@ -116,15 +121,17 @@ export async function getVaultItemById(id: string, userId?: string): Promise<Vau
 /**
  * Create a new vault item
  */
-export async function createVaultItem(data: VaultItemData): Promise<{ id: string; image: string; quote: string; createdAt: Date }> {
+export async function createVaultItem(data: VaultItemData): Promise<{ id: string; image: string; artist: string | null; quote: string; createdAt: Date }> {
   return prisma.vaultItem.create({
     data: {
       image: data.image,
+      artist: data.artist,
       quote: data.quote,
     },
     select: {
       id: true,
       image: true,
+      artist: true,
       quote: true,
       createdAt: true,
     },

@@ -14,6 +14,7 @@ export default function Navigation() {
                 <Link href="/thevault" className="help-link" aria-label="The Vault">
                     Vault
                 </Link>
+                <Link href="/appraisals">Appraisals</Link>
             </div>
         </nav>
     );
