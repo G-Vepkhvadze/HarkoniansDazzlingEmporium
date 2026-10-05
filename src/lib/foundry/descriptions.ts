@@ -58,6 +58,29 @@ export function sanitizeFoundryDescription(
     ""
   );
 
+    // ---------------------------------------------------------
+// Foundry source markers
+// |XPHB
+// → removed
+// ---------------------------------------------------------
+
+    text = text.replace(
+        /\|XPHB\b/gi,
+        ""
+    );
+
+    // ---------------------------------------------------------
+// Foundry damage command
+//
+// /damage
+// → removed
+// ---------------------------------------------------------
+
+    text = text.replace(
+        /\/damage\b/gi,
+        ""
+    );
+
   // ---------------------------------------------------------
   // Remove leftover Foundry parameters
   // ---------------------------------------------------------
@@ -71,6 +94,21 @@ export function sanitizeFoundryDescription(
     /type=(?:\[[^\]]*\])?/gi,
     ""
   );
+
+    // ---------------------------------------------------------
+// Foundry variant rule references
+//
+// ---------------------------------------------------------
+
+    text = text.replace(
+        /@variantrule\[[^\]]+\]\{([^}]+)\}/gi,
+        "$1"
+    );
+
+    text = text.replace(
+        /@variantrule\[[^\]]+\]/gi,
+        ""
+    );
 
   // ---------------------------------------------------------
   // Remove square brackets while preserving their contents

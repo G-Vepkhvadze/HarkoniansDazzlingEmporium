@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   getWorldBySecret,
   getKatastroWorldByFoundryId
@@ -492,6 +493,9 @@ export async function POST(request: Request) {
         auditContext
       );
 
+      revalidatePath("/marketplace");
+      revalidatePath(`/item/${updatedItem.id}`);
+
       // -------------------------------------------------------
       // Return existing item
       // -------------------------------------------------------
@@ -565,6 +569,9 @@ export async function POST(request: Request) {
       result.item.id,
       auditContext
     );
+
+    revalidatePath("/marketplace");
+    revalidatePath(`/item/${result.item.id}`);
 
     // ---------------------------------------------------------
     // Success

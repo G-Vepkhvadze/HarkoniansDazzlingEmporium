@@ -13,6 +13,7 @@
  */
 
 import * as bcrypt from 'bcryptjs';
+import { createHash } from 'node:crypto';
 
 // =============================================
 // TOKEN GENERATION
@@ -108,6 +109,17 @@ export async function hashToken(token: string): Promise<string> {
  */
 export async function verifyToken(input: string, storedHash: string): Promise<boolean> {
   return await bcrypt.compare(input, storedHash);
+}
+
+/**
+ * Create a deterministic lookup fingerprint for a bearer token.
+ *
+ * The database stores the token fingerprint only for indexed lookup, while
+ * the bcrypt hash remains the verifier. This avoids trying to look up a bcrypt
+ * hash by re-hashing the same token (bcrypt uses a random salt).
+ */
+export function fingerprintToken(token: string): string {
+  return createHash('sha256').update(token, 'utf8').digest('hex');
 }
 
 // =============================================

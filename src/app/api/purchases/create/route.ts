@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { broadcastToCharacter } from "@/lib/foundry/realtime";
 import {
   SESSION_COOKIE_CONFIG,
   getSessionByToken
@@ -405,142 +404,10 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    // =========================================================
-    // PURCHASE DELIVERY
-    // =========================================================
-
-    /*
-     * This is the critical broadcast.
-     *
-     * If this fails, Foundry has not been told about the purchase.
-     * We therefore return an error instead of pretending delivery
-     * succeeded.
-     */
-    try {
-      await broadcastToCharacter(
-        characterId,
-        {
-          event: "purchase",
-          payload: {
-            purchaseId: purchase.id,
-            actorId:
-              character.foundryActorId,
-            quantity: purchase.quantity,
-            item: {
-              id: item.id,
-              name: item.name,
-              type: item.type,
-              description: item.description,
-              rarity: item.rarity,
-              image: item.image,
-
-              // IMPORTANT:
-              // This is the original Foundry item JSON.
-              foundryItemData:
-                item.foundryItemData
-            }
-          }
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Purchase created but failed to broadcast to Foundry:",
-        error
-      );
-
-      return NextResponse.json(
-        {
-          success: true,
-          purchase: {
-            id: purchase.id,
-            status: "PENDING",
-            message:
-              "Purchase created. Foundry delivery is pending and will be retried automatically."
-          }
-        },
-        { status: 202 }
-      );
-    }
-
-    // =========================================================
-    // GOLD UPDATE
-    // =========================================================
-
-    try {
-      const updatedCharacter =
-        await prisma.character.findUnique({
-          where: {
-            id: characterId
-          },
-          select: {
-            creditBalance: true
-          }
-        });
-
-      await broadcastToCharacter(
-        characterId,
-        {
-          event: "gold_update",
-          payload: {
-            actorId:
-              character.foundryActorId,
-            characterId:
-              character.id,
-            gold:
-              updatedCharacter?.creditBalance ??
-              0
-          }
-        }
-      );
-    } catch (error) {
-      /*
-       * Gold synchronization is not allowed to turn a valid
-       * purchase into a failed HTTP request.
-       *
-       * Foundry also performs periodic gold reconciliation.
-       */
-      console.error(
-        "Purchase succeeded but failed to broadcast gold update:",
-        error
-      );
-    }
-
-    // =========================================================
-    // STOCK UPDATE
-    // =========================================================
-
-    try {
-      const updatedItem =
-        await prisma.item.findUnique({
-          where: {
-            id: itemId
-          },
-          select: {
-            stock: true
-          }
-        });
-
-      await broadcastToCharacter(
-        characterId,
-        {
-          event: "stock_update",
-          payload: {
-            itemId: item.id,
-            stock:
-              updatedItem?.stock ?? 0
-          }
-        }
-      );
-    } catch (error) {
-      /*
-       * Stock synchronization is also non-fatal.
-       * The actual database stock is already correct.
-       */
-      console.error(
-        "Purchase succeeded but failed to broadcast stock update:",
-        error
-      );
-    }
+    // Realtime notifications are emitted by PostgreSQL triggers after the
+    // transaction commits. This route only needs to create the durable
+    // PENDING record; Foundry will receive the broadcast and can recover it
+    // from /foundry/purchases/pending if the WebSocket is unavailable.
 
     // =========================================================
     // SUCCESS

@@ -72,6 +72,8 @@ export function createFoundryRealtimeToken({
 
         role: "authenticated",
 
+        aud: "authenticated",
+
         character_id:
         characterId,
 

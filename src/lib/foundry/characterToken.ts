@@ -22,7 +22,7 @@
  */
 
 import { prisma } from '../prisma';
-import { hashToken, verifyToken, generateSecureToken } from '../crypto';
+import { hashToken, verifyToken, fingerprintToken, generateSecureToken } from '../crypto';
 
 // User role type
 type UserRole = "PLAYER" | "DM";
@@ -73,17 +73,25 @@ export async function createCharacterToken(
   expiresInDays: number = CHARACTER_TOKEN_EXPIRY_DAYS
 ): Promise<string> {
   const { token, tokenHash } = await generateCharacterToken(characterId, expiresInDays);
-  
+  const tokenFingerprint = fingerprintToken(token);
   const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
-  
-  await prisma.characterApiToken.create({
-    data: {
-      tokenHash,
-      characterId,
-      expiresAt,
-    },
+
+  // A Foundry Actor should have one active bearer credential at a time.
+  await prisma.$transaction(async (tx) => {
+    await tx.characterApiToken.deleteMany({
+      where: { characterId },
+    });
+
+    await tx.characterApiToken.create({
+      data: {
+        tokenHash,
+        tokenFingerprint,
+        characterId,
+        expiresAt,
+      },
+    });
   });
-  
+
   return token;
 }
 
@@ -115,10 +123,16 @@ export async function validateCharacterToken(
     role: UserRole;
   };
 } | null> {
-  const tokenHash = await hashToken(token);
-  
-  const charToken = await prisma.characterApiToken.findUnique({
-    where: { tokenHash },
+  const now = new Date();
+  const fingerprint = fingerprintToken(token);
+
+  // New tokens have a deterministic lookup fingerprint, so validation is a
+  // single indexed query followed by bcrypt verification.
+  let candidates = await prisma.characterApiToken.findMany({
+    where: {
+      tokenFingerprint: fingerprint,
+      expiresAt: { gt: now },
+    },
     include: {
       character: {
         include: {
@@ -128,36 +142,67 @@ export async function validateCharacterToken(
         },
       },
     },
+    take: 1,
   });
-  
-  if (!charToken) {
-    return null;
-  }
-  
-  if (charToken.expiresAt < new Date()) {
-    // Token expired - optionally clean up
-    await prisma.characterApiToken.delete({
-      where: { tokenHash },
+
+  // Backward compatibility for tokens created before tokenFingerprint was
+  // introduced. Once a legacy token validates, it is backfilled.
+  if (candidates.length === 0) {
+    candidates = await prisma.characterApiToken.findMany({
+      where: {
+        tokenFingerprint: null,
+        expiresAt: { gt: now },
+      },
+      include: {
+        character: {
+          include: {
+            user: {
+              select: { id: true, username: true, role: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
     });
-    return null;
   }
-  
-  return {
-    character: {
-      id: charToken.character.id,
-      userId: charToken.character.userId,
-      name: charToken.character.name,
-      creditBalance: charToken.character.creditBalance,
-      foundryWorldId: charToken.character.foundryWorldId,
-      foundryActorId: charToken.character.foundryActorId,
-      katastroWorldId: charToken.character.katastroWorldId,
-    },
-    user: {
-      id: charToken.character.user.id,
-      username: charToken.character.user.username,
-      role: charToken.character.user.role,
-    },
-  };
+
+  for (const charToken of candidates) {
+    const valid = await verifyToken(token, charToken.tokenHash);
+    if (!valid) {
+      continue;
+    }
+
+    if (charToken.expiresAt < now) {
+      await prisma.characterApiToken.delete({ where: { id: charToken.id } }).catch(() => undefined);
+      return null;
+    }
+
+    if (!charToken.tokenFingerprint) {
+      await prisma.characterApiToken.update({
+        where: { id: charToken.id },
+        data: { tokenFingerprint: fingerprint },
+      }).catch(() => undefined);
+    }
+
+    return {
+      character: {
+        id: charToken.character.id,
+        userId: charToken.character.userId,
+        name: charToken.character.name,
+        creditBalance: charToken.character.creditBalance,
+        foundryWorldId: charToken.character.foundryWorldId,
+        foundryActorId: charToken.character.foundryActorId,
+        katastroWorldId: charToken.character.katastroWorldId,
+      },
+      user: {
+        id: charToken.character.user.id,
+        username: charToken.character.user.username,
+        role: charToken.character.user.role,
+      },
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -182,16 +227,41 @@ export async function getCharacterIdFromToken(token: string): Promise<string | n
  * @returns Promise resolving to true if revoked, false if not found
  */
 export async function revokeCharacterToken(token: string): Promise<boolean> {
-  const tokenHash = await hashToken(token);
-  
-  try {
-    await prisma.characterApiToken.delete({
-      where: { tokenHash },
-    });
-    return true;
-  } catch {
-    return false;
+  const fingerprint = fingerprintToken(token);
+
+  const candidates = await prisma.characterApiToken.findMany({
+    where: {
+      tokenFingerprint: fingerprint,
+    },
+    select: {
+      id: true,
+      tokenHash: true,
+    },
+    take: 1,
+  });
+
+  for (const candidate of candidates) {
+    if (await verifyToken(token, candidate.tokenHash)) {
+      await prisma.characterApiToken.delete({ where: { id: candidate.id } });
+      return true;
+    }
   }
+
+  // Legacy token fallback.
+  const legacyTokens = await prisma.characterApiToken.findMany({
+    where: { tokenFingerprint: null },
+    select: { id: true, tokenHash: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  for (const candidate of legacyTokens) {
+    if (await verifyToken(token, candidate.tokenHash)) {
+      await prisma.characterApiToken.delete({ where: { id: candidate.id } });
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**

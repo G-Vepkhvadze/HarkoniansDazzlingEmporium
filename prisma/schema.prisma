@@ -247,6 +247,9 @@ model CharacterApiToken {
   // Hashed token. Raw token is only returned to Foundry.
   tokenHash String @unique
 
+  // Deterministic lookup key; tokenHash remains the bcrypt verifier.
+  tokenFingerprint String? @unique
+
   characterId String
   character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 

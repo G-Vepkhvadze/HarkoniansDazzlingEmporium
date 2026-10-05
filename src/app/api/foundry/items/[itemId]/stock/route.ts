@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
-import { broadcastToCharacter } from "@/lib/foundry/realtime";
 import { getHarkoniansMetadataString } from "@/lib/foundry/items";
 
 export const runtime = 'nodejs';
@@ -152,10 +151,7 @@ export async function PUT(
       context
     );
 
-    // Note: Stock updates from manual changes are not broadcast to avoid
-    // complexity of tracking which characters need updates.
-    // Stock updates during purchases are handled by the purchase flow itself.
-    // The UI will show updated stock on next page load.
+    // PostgreSQL emits the stock_update broadcast from the item row update.
 
     const response = NextResponse.json({
       success: true,

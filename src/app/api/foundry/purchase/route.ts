@@ -2,11 +2,11 @@
 import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
+import { requireFullFoundryAuthorization } from "@/lib/foundry/worldSecretMiddleware";
 import {
   createAuditLog,
   createAuditContextFromRequest
 } from "@/lib/audit";
-import { broadcastToCharacter } from "@/lib/foundry/realtime";
 
 export const runtime = "nodejs";
 
@@ -75,10 +75,12 @@ export async function OPTIONS(request: Request) {
  * - Refunds the GP.
  * - Restores finite stock.
  * - Marks the purchase FAILED.
- * - Broadcasts the restored gold and stock to Foundry.
+ * - PostgreSQL triggers broadcast the restored gold and stock to Foundry.
  */
 export async function POST(request: Request) {
   try {
+    const auth = await requireFullFoundryAuthorization(request);
+
     // ---------------------------------------------------------
     // Validate world secret
     // ---------------------------------------------------------
@@ -151,6 +153,24 @@ export async function POST(request: Request) {
       foundryItemId,
       error
     } = body;
+
+    if (auth.world.id !== world.id || auth.world.foundryWorldId !== world.foundryWorldId) {
+      const response = NextResponse.json(
+        { error: "Foundry authorization does not match this world." },
+        { status: 403 }
+      );
+      addCorsHeaders(response, request);
+      return response;
+    }
+
+    if (foundryActorId && auth.character.foundryActorId !== foundryActorId) {
+      const response = NextResponse.json(
+        { error: "Foundry actor does not match the linked Harkonians character." },
+        { status: 403 }
+      );
+      addCorsHeaders(response, request);
+      return response;
+    }
 
     if (!purchaseId || !status) {
       const response = NextResponse.json(
@@ -254,10 +274,7 @@ export async function POST(request: Request) {
       // the same purchase.
       // -------------------------------------------------------
 
-      const {
-        updatedCharacter,
-        updatedItem
-      } = await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         const claimed =
           await tx.purchase.updateMany({
             where: {
@@ -276,26 +293,23 @@ export async function POST(request: Request) {
           );
         }
 
-        const updatedCharacter =
-          await tx.character.update({
-            where: {
-              id: purchase.characterId
-            },
-            data: {
-              creditBalance: {
-                increment: purchase.priceGp
-              }
+        await tx.character.update({
+          where: {
+            id: purchase.characterId
+          },
+          data: {
+            creditBalance: {
+              increment: purchase.priceGp
             }
-          });
-
-        let updatedItem = null;
+          }
+        });
 
         // Restore stock only for finite-stock items.
         if (
           purchase.item &&
           purchase.item.stock !== -1
         ) {
-          updatedItem = await tx.item.update({
+          await tx.item.update({
             where: {
               id: purchase.item.id
             },
@@ -306,11 +320,6 @@ export async function POST(request: Request) {
             }
           });
         }
-
-        return {
-          updatedCharacter,
-          updatedItem
-        };
       });
 
       // -------------------------------------------------------
@@ -334,46 +343,7 @@ export async function POST(request: Request) {
         context
       );
 
-      // -------------------------------------------------------
-      // Tell Foundry that GP was refunded
-      // -------------------------------------------------------
-
-      if (purchase.character.foundryActorId) {
-        await broadcastToCharacter(
-          purchase.characterId,
-          {
-            event: "gold_update",
-            payload: {
-              actorId:
-                purchase.character.foundryActorId,
-              characterId:
-                purchase.characterId,
-              gold:
-                updatedCharacter.creditBalance
-            }
-          }
-        );
-      }
-
-      // -------------------------------------------------------
-      // Tell Foundry that stock was restored
-      // -------------------------------------------------------
-
-      if (
-        purchase.item &&
-        updatedItem
-      ) {
-        await broadcastToCharacter(
-          purchase.characterId,
-          {
-            event: "stock_update",
-            payload: {
-              itemId: purchase.item.id,
-              stock: updatedItem.stock
-            }
-          }
-        );
-      }
+      // PostgreSQL triggers broadcast the authoritative gold/stock changes.
 
       const response = NextResponse.json({
         success: true,
@@ -575,60 +545,8 @@ export async function POST(request: Request) {
         context
       );
 
-      // Reconciliation broadcasts are safe after completion because they
-      // do not perform another deduction. They repair state when the
-      // original purchase event was delivered via a retry/resync path.
-      try {
-        const currentCharacter =
-          await prisma.character.findUnique({
-            where: { id: purchase.characterId },
-            select: {
-              id: true,
-              foundryActorId: true,
-              creditBalance: true
-            }
-          });
-
-        if (currentCharacter?.foundryActorId) {
-          await broadcastToCharacter(
-            purchase.characterId,
-            {
-              event: "gold_update",
-              payload: {
-                actorId: currentCharacter.foundryActorId,
-                characterId: currentCharacter.id,
-                gold: currentCharacter.creditBalance
-              }
-            }
-          );
-        }
-
-        if (purchase.item) {
-          const currentItem =
-            await prisma.item.findUnique({
-              where: { id: purchase.item.id },
-              select: { stock: true }
-            });
-
-          if (currentItem) {
-            await broadcastToCharacter(
-              purchase.characterId,
-              {
-                event: "stock_update",
-                payload: {
-                  itemId: purchase.item.id,
-                  stock: currentItem.stock
-                }
-              }
-            );
-          }
-        }
-      } catch (error) {
-        console.error(
-          "Purchase completed but reconciliation broadcast failed:",
-          error
-        );
-      }
+      // Gold and stock updates are emitted by PostgreSQL triggers when the
+      // underlying rows change. No manual realtime call is needed here.
 
       /*
        * IMPORTANT:

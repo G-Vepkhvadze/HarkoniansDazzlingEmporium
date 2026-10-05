@@ -189,7 +189,7 @@ function FoundryLinkPageContent() {
   if (isAuthenticated === null) {
     return (
       <div style={{ padding: "2rem" }}>
-        <h1>Link Foundry Character</h1>
+        <h1>Link Foundry Actor</h1>
         <p>Loading...</p>
       </div>
     );
@@ -202,7 +202,7 @@ function FoundryLinkPageContent() {
   if (!user) {
     return (
       <div style={{ padding: "2rem" }}>
-        <h1>Link Foundry Character</h1>
+        <h1>Link Foundry Actor</h1>
         <p>Please log in to continue.</p>
       </div>
     );
@@ -210,7 +210,7 @@ function FoundryLinkPageContent() {
 
   return (
     <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
-      <h1>Link Foundry Character</h1>
+      <h1>Link Foundry Actor</h1>
 
       {!requestId && (
         <div style={{ padding: "1rem", background: "var(--background-secondary)", borderRadius: "8px", marginBottom: "1rem" }}>
@@ -224,7 +224,7 @@ function FoundryLinkPageContent() {
 
       {linkRequest && (
         <div style={{ marginTop: "2rem" }}>
-          <h2>Linking Foundry Actor to Harkonians</h2>
+          <h2>Connect a Foundry Actor to your Harkonians account</h2>
           <div style={{ padding: "1rem", background: "var(--background-secondary)", borderRadius: "8px", margin: "1rem 0" }}>
             <p><strong>Foundry Actor:</strong> {linkRequest.foundryActorId}</p>
             <p><strong>Foundry World:</strong> {linkRequest.foundryWorldId}</p>
@@ -232,34 +232,34 @@ function FoundryLinkPageContent() {
 
           <p>
             {characters.length > 0
-              ? "You already have Harkonians characters. You can link this Foundry Actor to one of them, or create a new character."
-              : "You don't have any Harkonians characters yet. You'll need to create one."}
+              ? "You can connect this Foundry Actor to an existing Harkonians character, or create a new account-side character record for it."
+              : "No Harkonians character record exists yet. Create one for this Foundry Actor to finish the connection."}
           </p>
 
           <div style={{ margin: "1rem 0", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
             <button onClick={handleLinkWithNewCharacter} disabled={isLoading} style={{ padding: "0.6rem 1rem", fontSize: "1rem" }}>
-              {characters.length > 0 ? "Select Existing Character" : "Create New Character"}
+              {characters.length > 0 ? "Use Existing Character" : "Create Character Record"}
             </button>
           </div>
 
           {showCreateCharacter && (
             <div style={{ marginTop: "1rem", padding: "1rem", background: "var(--background-secondary)", borderRadius: "8px" }}>
-              <h3>Create New Character</h3>
+              <h3>Create Character Record</h3>
               <p>This will create a new Harkonians character linked to your Foundry Actor.</p>
               <label style={{ display: "block", marginTop: "1rem" }}>
                 Character Name
                 <input type="text" value={characterName} onChange={(e) => setCharacterName(e.target.value)} placeholder="Enter your character's name" style={{ display: "block", width: "100%", padding: "0.5rem", marginTop: "0.5rem", maxWidth: "400px" }} />
               </label>
               <button onClick={handleCreateCharacter} disabled={isLoading || !characterName.trim()} style={{ padding: "0.6rem 1rem", marginTop: "1rem" }}>
-                {isLoading ? "Creating..." : "Create and Link Character"}
+                {isLoading ? "Creating..." : "Create and Link"}
               </button>
             </div>
           )}
 
           {characters.length > 0 && !showCreateCharacter && (
             <div style={{ marginTop: "1rem", padding: "1rem", background: "var(--background-secondary)", borderRadius: "8px" }}>
-              <h3>Select Existing Character</h3>
-              <p>Select which of your existing Harkonians characters to link to this Foundry Actor.</p>
+              <h3>Use Existing Character</h3>
+              <p>Choose the Harkonians character record that should own this Foundry Actor.</p>
               <select value={selectedCharacterId} onChange={(e) => setSelectedCharacterId(e.target.value)} style={{ display: "block", width: "100%", padding: "0.5rem", margin: "0.5rem 0", maxWidth: "400px" }}>
                 <option value="">Select a character...</option>
                 {characters.map((character) => (
@@ -267,7 +267,7 @@ function FoundryLinkPageContent() {
                 ))}
               </select>
               <button onClick={handleSelectExistingCharacter} disabled={isLoading || !selectedCharacterId} style={{ padding: "0.6rem 1rem", marginTop: "0.5rem" }}>
-                {isLoading ? "Linking..." : "Link Selected Character"}
+                {isLoading ? "Linking..." : "Link Character"}
               </button>
             </div>
           )}
@@ -294,7 +294,7 @@ function FoundryLinkPageContent() {
           <li>You'll be redirected here to authenticate</li>
           <li>Select or create a Harkonians character</li>
           <li>Return to Foundry to complete the process</li>
-          <li>Your Foundry Actor will now be connected to your Harkonians Character</li>
+          <li>Your Foundry Actor will be connected directly to your Harkonians account through the selected character record</li>
         </ol>
         <p style={{ marginTop: "1rem" }}><strong>Note:</strong> Each Foundry Actor can only be linked to one Harkonians Character.</p>
       </div>
@@ -304,7 +304,7 @@ function FoundryLinkPageContent() {
 
 export default function FoundryLinkPage() {
   return (
-    <Suspense fallback={<div style={{ padding: "2rem" }}><h1>Link Foundry Character</h1><p>Loading...</p></div>}>
+    <Suspense fallback={<div style={{ padding: "2rem" }}><h1>Link Foundry Actor</h1><p>Loading...</p></div>}>
       <FoundryLinkPageContent />
     </Suspense>
   );

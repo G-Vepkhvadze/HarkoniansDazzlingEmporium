@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getWorldBySecret } from "@/lib/foundry/worldSecret";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, createAuditContextFromRequest } from "@/lib/audit";
-import { broadcastToCharacter } from "@/lib/foundry/realtime";
 import { requireFullFoundryAuthorization } from "@/lib/foundry/worldSecretMiddleware";
 
 export const runtime = 'nodejs';
@@ -185,7 +184,7 @@ export async function POST(request: Request) {
     }
 
     // Parse request body
-    let body: { foundryWorldId?: string; foundryActorId?: string; gold?: number } = {};
+    let body: { foundryWorldId?: string; foundryActorId?: string; gold?: number; expectedGold?: number } = {};
     try {
       const bodyText = await request.text();
       if (bodyText) {
@@ -200,11 +199,25 @@ export async function POST(request: Request) {
       return response;
     }
 
-    const { foundryWorldId, foundryActorId, gold } = body;
+    const { foundryWorldId, foundryActorId, gold, expectedGold } = body;
 
     if (!foundryWorldId || !foundryActorId || gold === undefined) {
       const response = NextResponse.json(
         { error: "foundryWorldId, foundryActorId, and gold are required" },
+        { status: 400 }
+      );
+      addCorsHeaders(response, request);
+      return response;
+    }
+
+    if (expectedGold !== undefined && (
+      typeof expectedGold !== "number" ||
+      !Number.isFinite(expectedGold) ||
+      !Number.isInteger(expectedGold) ||
+      expectedGold < 0
+    )) {
+      const response = NextResponse.json(
+        { error: "expectedGold must be a non-negative whole number when supplied" },
         { status: 400 }
       );
       addCorsHeaders(response, request);
@@ -273,12 +286,45 @@ export async function POST(request: Request) {
     const oldBalance =
         character.creditBalance;
 
-    character = await prisma.character.update({
+    const normalizedGold = Math.max(0, gold);
+
+    if (expectedGold !== undefined) {
+      const updateResult = await prisma.character.updateMany({
+        where: {
+          id: character.id,
+          creditBalance: expectedGold
+        },
+        data: {
+          creditBalance: normalizedGold
+        }
+      });
+
+      if (updateResult.count !== 1) {
+        const current = await prisma.character.findUnique({
+          where: { id: character.id },
+          select: { creditBalance: true }
+        });
+
+        const response = NextResponse.json(
+          {
+            error: "Gold changed on Harkonians before this Foundry update could be applied.",
+            gold: current?.creditBalance ?? character.creditBalance,
+            conflict: true
+          },
+          { status: 409 }
+        );
+        addCorsHeaders(response, request);
+        return response;
+      }
+    } else {
+      await prisma.character.update({
+        where: { id: character.id },
+        data: { creditBalance: normalizedGold }
+      });
+    }
+
+    character = await prisma.character.findUniqueOrThrow({
       where: { id: character.id },
-      data: {
-        creditBalance:
-            Math.max(0, gold)
-      },
       select: {
         id: true,
         name: true,
@@ -321,24 +367,7 @@ export async function POST(request: Request) {
       );
     }
 
-    try {
-      await broadcastToCharacter(
-        character.id,
-        {
-          event: "gold_update",
-          payload: {
-            actorId: foundryActorId,
-            characterId: character.id,
-            gold: character.creditBalance
-          }
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Gold sync succeeded but realtime broadcast failed:",
-        error
-      );
-    }
+    // PostgreSQL emits the gold_update broadcast from the character row update.
 
     const response = NextResponse.json({
       success: true,
