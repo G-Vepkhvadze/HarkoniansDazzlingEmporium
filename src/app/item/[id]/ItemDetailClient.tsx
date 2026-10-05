@@ -213,7 +213,65 @@ export default function ItemDetailClient({ item }: { item: ItemWithReviews }) {
         setError(
             data.error || "Purchase failed."
         );
+
         return;
+      }
+
+      /*
+       * Immediately update the local character list with
+       * the authoritative balance returned by the server.
+       */
+      const newGold =
+          Number(data?.character?.gold);
+
+      const updatedCharacterId =
+          data?.character?.id;
+
+      if (
+          updatedCharacterId &&
+          Number.isFinite(newGold)
+      ) {
+        const normalizedGold =
+            Math.max(
+                0,
+                Math.floor(newGold)
+            );
+
+        /*
+         * Update the balance displayed in the purchase
+         * character selector.
+         */
+        setCharacters((current) =>
+            current.map((character) =>
+                character.id === updatedCharacterId
+                    ? {
+                      ...character,
+                      creditBalance:
+                      normalizedGold
+                    }
+                    : character
+            )
+        );
+
+        /*
+         * Tell other components in this browser,
+         * including CurrentGold, that the authoritative
+         * character balance changed.
+         */
+        window.dispatchEvent(
+            new CustomEvent(
+                "harkonians:gold-updated",
+                {
+                  detail: {
+                    characterId:
+                    updatedCharacterId,
+
+                    gold:
+                    normalizedGold
+                  }
+                }
+            )
+        );
       }
 
       setSuccess(

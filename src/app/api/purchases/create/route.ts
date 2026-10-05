@@ -399,9 +399,27 @@ export async function POST(request: Request) {
             }
           });
         }
+
       }
 
       throw error;
+    }
+
+    const updatedCharacter =
+        await prisma.character.findUnique({
+          where: {
+            id: characterId
+          },
+          select: {
+            id: true,
+            creditBalance: true
+          }
+        });
+
+    if (!updatedCharacter) {
+      throw new Error(
+          "Character disappeared after purchase."
+      );
     }
 
     // Realtime notifications are emitted by PostgreSQL triggers after the
@@ -414,16 +432,22 @@ export async function POST(request: Request) {
     // =========================================================
 
     return NextResponse.json(
-      {
-        success: true,
-        purchase: {
-          id: purchase.id,
-          status: "PENDING",
-          message:
-            "Purchase created and sent to Foundry"
-        }
-      },
-      { status: 201 }
+        {
+          success: true,
+
+          purchase: {
+            id: purchase.id,
+            status: "PENDING",
+            message:
+                "Purchase created and sent to Foundry"
+          },
+
+          character: {
+            id: updatedCharacter.id,
+            gold: updatedCharacter.creditBalance
+          }
+        },
+        { status: 201 }
     );
 
   } catch (error) {
