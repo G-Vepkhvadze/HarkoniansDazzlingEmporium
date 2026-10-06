@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth/index";
 import { AuthProvider } from "@/components/AuthProvider/AuthProvider";
 import Navigation from "@/components/Navigation/Navigation";
 import Link from "next/link";
-import CurrentGold from "@/components/CurrentGold/CurrentGold";
 
 const cinzel = Cinzel_Decorative({
   subsets: ["latin"],
@@ -53,7 +52,6 @@ export default async function RootLayout({
           <header className="site-header">
             <Navigation />
           </header>
-          <CurrentGold />
           <main className="page-shell">{children}</main>
           <footer className="site-footer">
             <div className="site-footer__inner">
